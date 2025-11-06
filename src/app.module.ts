@@ -1,0 +1,64 @@
+import { Module } from '@nestjs/common';
+import { AppController } from './app.controller';
+import { AppService } from './app.service';
+import { UsersService } from './users/users.service';
+import { UsersModule } from './users/users.module';
+import { MedicationsModule } from './medications/medications.module';
+import { DepartmentsModule } from './departments/departments.module';
+import { DepartmentStocksModule } from './department-stocks/department-stocks.module';
+import { RemissionsModule } from './remissions/remissions.module';
+import { ConsultationsModule } from './consultations/consultations.module';
+import { StockRequestsModule } from './stock-requests/stock-requests.module';
+import { WorkersModule } from './workers/workers.module';
+import { PatientsModule } from './patients/patients.module';
+import { WorkerDepartmentModule } from './workers-department/workers-department.module';
+import { ConsultationPrescriptionsModule } from './consultations-prescriptions/consultations-prescriptions.module';
+import { MedicationOrdersModule } from './medication-orders/medication-orders.module';
+import { MedicationDeliveryModule } from './medication-deliveries/medication-deliveries.module';
+import { ClinicHistoryModule } from './clinic-histories/clinic-histories.module';
+import { HeadsOfDepartmentsModule } from './heads-of-departments/heads-of-departments.module';
+import { StocksModule } from './stocks/stocks.module';
+import { StockItemsModule } from './stock-items/stock-items.module';
+import { StockItemsService } from './stock-items/stocks-items.service';
+import { MedicationOrderItemsModule } from './medication-order-items/medication-order-items.module';
+
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { AuthModule } from './auth/auth.module';
+
+@Module({
+  imports: [
+    TypeOrmModule.forRoot({
+      type: 'postgres',
+      host: 'localhost',
+      port: 5436,
+      username: 'policlinic',
+      password: 'policlinicpass',
+      database: 'poldb',
+      entities: [__dirname + '/**/*.entity{.ts,.js}'],
+      synchronize: true,
+    }),
+    UsersModule,
+    DepartmentsModule,
+    MedicationsModule,
+    DepartmentStocksModule,
+    RemissionsModule,
+    ConsultationsModule,
+    StockRequestsModule,
+    WorkersModule,
+    PatientsModule,
+    WorkerDepartmentModule,
+    ConsultationPrescriptionsModule,
+    MedicationOrdersModule,
+    MedicationDeliveryModule,
+    ClinicHistoryModule,
+    HeadsOfDepartmentsModule,
+    StocksModule,
+    StockItemsModule,
+    MedicationOrderItemsModule,
+    AuthModule,
+  ],
+  controllers: [AppController],
+  providers: [AppService],
+})
+export class AppModule {}
+
