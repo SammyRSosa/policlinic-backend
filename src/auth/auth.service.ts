@@ -15,12 +15,12 @@ export class AuthService {
     @InjectRepository(Worker) private workerRepo: Repository<Worker>,
     @InjectRepository(Patient) private patientRepo: Repository<Patient>,
     private jwtService: JwtService,
-  ) {}
+  ) { }
 
   // 🔹 Register existing worker or patient
   async register(account: string, password: string) {
     const existingUser = await this.userRepo.findOne({ where: { username: account } });
-    if (existingUser)  throw new BadRequestException(`Account already registered for username: ${account}`);
+    if (existingUser) throw new BadRequestException(`Account already registered for username: ${account}`);
 
     const patient = await this.patientRepo.findOne({ where: { idNumber: account } });
     const worker = await this.workerRepo.findOne({ where: { code: account }, relations: ['department'] });
@@ -61,15 +61,27 @@ export class AuthService {
 
   // 🔹 Login
   async login(account: string, password: string) {
+    // 1️⃣ Find user by username (or account)
     const user = await this.userRepo.findOne({ where: { username: account } });
     if (!user) throw new UnauthorizedException('Invalid credentials');
 
+    // 2️⃣ Check password validity
     const valid = await bcrypt.compare(password, user.password);
     if (!valid) throw new UnauthorizedException('Invalid credentials');
 
-    const payload = { username: user.username, role: user.role };
+    // 3️⃣ Include ID + role + username in token payload
+    const payload = {
+      sub: user.id,           // ✅ user ID in standard JWT claim
+      username: user.username,
+      role: user.role,
+    };
+
+    // 4️⃣ Sign and return token
     const token = this.jwtService.sign(payload);
 
-    return { access_token: token, role: user.role };
+    return {
+      access_token: token,
+      role: user.role,
+    };
   }
 }

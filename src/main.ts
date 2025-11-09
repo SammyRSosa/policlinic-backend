@@ -27,6 +27,11 @@ async function bootstrap() {
     console.log('ℹ️ Super admin already exists.');
   }
 
+  app.enableCors({
+    origin: 'http://localhost:3001', // frontend URL
+    credentials: true,               // if you send cookies or auth headers
+  });
+
   await app.listen(process.env.PORT ?? 3000);
   console.log(`🚀 Application running on: http://localhost:${process.env.PORT ?? 3000}`);
 }
