@@ -50,11 +50,26 @@ export class AuthService {
     }
 
     // ✅ Correct create() syntax
+    if (patient) {
     const user = this.userRepo.create({
       username: account,
       password: hashed,
       role,
-    });
+      patient: patient,
+    });}
+
+    if (worker) {
+    const user = this.userRepo.create({
+      username: account,
+      password: hashed,
+      role,
+      worker: worker,
+    });}
+
+    const user = this.userRepo.create({
+      username: account,
+      password: hashed,
+      role});
 
     return this.userRepo.save(user);
   }

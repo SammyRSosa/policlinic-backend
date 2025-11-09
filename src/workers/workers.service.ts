@@ -5,6 +5,7 @@ import { Worker, WorkerRole } from './worker.entity';
 import { Department } from '../departments/department.entity';
 import { User, UserRole } from '../users/user.entity';
 import { CreateWorkerDto } from './dto/create-worker.dto';
+import { UpdateWorkerDto } from './dto/update-worker.dto';
 
 @Injectable()
 export class WorkersService {
@@ -56,6 +57,32 @@ export class WorkersService {
 
   findAll() {
     return this.workersRepo.find({ relations: ['department'] });
+  }
+
+  async updateWorker(
+    id: string,
+    updateData: UpdateWorkerDto,
+  ) {
+    const worker = await this.workersRepo.findOne({ where: { id }, relations: ['department'] })
+    if (!worker) throw new NotFoundException('Worker not found')
+
+    if (updateData.firstName) worker.firstName = updateData.firstName
+    if (updateData.lastName) worker.lastName = updateData.lastName
+    if (updateData.role) worker.role = updateData.role
+
+    if (updateData.departmentId) {
+      const department = await this.departmentsRepo.findOne({ where: { id: updateData.departmentId } })
+      if (!department) throw new NotFoundException('Department not found')
+      worker.department = department
+    }
+
+    return this.workersRepo.save(worker)
+  }
+
+  async remove(id: string) {
+    const worker = await this.workersRepo.findOne({ where: { id } });
+    if (!worker) throw new NotFoundException('User not found');
+    return this.workersRepo.remove(worker);
   }
 }
 
