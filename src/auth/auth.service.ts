@@ -49,27 +49,35 @@ export class AuthService {
       }
     }
 
+
+    const user = this.userRepo.create({
+      username: account,
+      password: hashed,
+      role
+    });
+
     // ✅ Correct create() syntax
     if (patient) {
-    const user = this.userRepo.create({
-      username: account,
-      password: hashed,
-      role,
-      patient: patient,
-    });}
+      const user = this.userRepo.create({
+        username: account,
+        password: hashed,
+        role,
+        patient: patient,
+      });
+      return this.userRepo.save(user);
+    }
 
     if (worker) {
-    const user = this.userRepo.create({
-      username: account,
-      password: hashed,
-      role,
-      worker: worker,
-    });}
+      const user = this.userRepo.create({
+        username: account,
+        password: hashed,
+        role,
+        worker: worker,
+      });
+      return this.userRepo.save(user);
+    }
 
-    const user = this.userRepo.create({
-      username: account,
-      password: hashed,
-      role});
+
 
     return this.userRepo.save(user);
   }

@@ -27,7 +27,7 @@ export class UsersController {
   // Update user role
   @Patch(':id/role')
   @Roles(UserRole.ADMIN)
-  updateRole(@Param('id') id: string, @Body('role') role: UserRole) {
+  updateRole(@Param(':id') id: string, @Body('role') role: UserRole) {
     return this.usersService.updateRole(id, role);
   }
 
