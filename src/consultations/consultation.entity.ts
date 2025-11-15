@@ -9,6 +9,7 @@ import {
   OneToOne,
   JoinColumn,
   OneToMany,
+  Unique,
 } from 'typeorm';
 import { Patient } from 'src/patients/patient.entity';
 import { Worker } from 'src/workers/worker.entity';
@@ -25,6 +26,7 @@ export enum ConsultationStatus {
 }
 
 @Entity('consultations')
+@Unique(["mainDoctor","createdAt"])
 @TableInheritance({ column: { type: 'varchar', name: 'type' } })
 export abstract class Consultation {
   @PrimaryGeneratedColumn('uuid')

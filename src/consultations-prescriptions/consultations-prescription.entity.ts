@@ -3,11 +3,13 @@ import {
   PrimaryGeneratedColumn,
   ManyToOne,
   Column,
+  Unique,
 } from 'typeorm';
 import { Consultation } from 'src/consultations/consultation.entity';
 import { Medication } from 'src/medications/medication.entity'; // We'll create a Medication entity later
 
 @Entity('consultation_prescriptions')
+@Unique(["consultation","medication"])
 export class ConsultationPrescription {
   @PrimaryGeneratedColumn('uuid')
   id: string;
