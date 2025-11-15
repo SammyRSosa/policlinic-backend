@@ -1,7 +1,6 @@
 import {
   Entity,
   PrimaryGeneratedColumn,
-  PrimaryColumn,
   Column,
   ManyToOne,
   OneToMany,
@@ -25,7 +24,7 @@ export class Worker {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @PrimaryColumn()
+  @Column({ unique: true })
   code: string; // unique worker code for login if assigned
 
   @Column()
