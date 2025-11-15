@@ -5,6 +5,7 @@ import {
   ManyToOne,
   OneToMany,
   CreateDateColumn,
+  OneToOne,
 } from 'typeorm';
 import { Patient } from 'src/patients/patient.entity';
 import { Consultation } from 'src/consultations/consultation.entity';
@@ -14,7 +15,7 @@ export class ClinicHistory {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @ManyToOne(() => Patient, { nullable: false })
+  @OneToOne(() => Patient, { nullable: false })
   patient: Patient;
 
   @OneToMany(() => Consultation, (consultation) => consultation.clinicHistory)
