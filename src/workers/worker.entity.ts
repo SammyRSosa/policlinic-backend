@@ -46,6 +46,9 @@ export class Worker {
   department?: Department;
 
   @OneToMany(() => Consultation, (consultation) => consultation.mainDoctor)
+  mainconsultations: Consultation[];
+
+  @OneToMany(() => Consultation, (consultation) => consultation.Doctor)
   consultations: Consultation[];
 
   @OneToOne(() => Department, (department) => department.headOfDepartment)

@@ -33,6 +33,9 @@ export abstract class Consultation {
   @ManyToOne(() => Worker, { nullable: false })
   mainDoctor: Worker;
 
+  @ManyToOne(() => Worker, { nullable: false })
+  Doctor: Worker;
+
   @ManyToOne(() => Department, { nullable: false })
   department: Department;
 
