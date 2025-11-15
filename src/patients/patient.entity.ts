@@ -42,7 +42,7 @@ export class Patient {
   @OneToMany(() => EmergencyConsultation, (consultation) => consultation.patient)
   emergencyConsultations: EmergencyConsultation[];
 
-  @OneToMany(() => ClinicHistory, (history) => history.patient)
+  @OneToOne(() => ClinicHistory, (history) => history.patient)
   clinicHistories: ClinicHistory[];
 
   // Link to user account
