@@ -5,11 +5,13 @@ import {
   Column,
   CreateDateColumn,
   UpdateDateColumn,
+  Unique,
 } from 'typeorm';
 import { Worker } from 'src/workers//worker.entity';
 import { Department } from 'src/departments/department.entity';
 
 @Entity('worker_departments')
+@Unique(['worker', 'department', 'joinedAt'])
 export class WorkerDepartment {
   @PrimaryGeneratedColumn('uuid')
   id: string;

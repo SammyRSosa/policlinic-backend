@@ -8,12 +8,14 @@ import {
   CreateDateColumn,
   TableInheritance,
   ChildEntity,
+  Unique,
 } from 'typeorm';
 import { Patient } from 'src/patients/patient.entity';
 import { Department } from 'src/departments/department.entity';
 import { Consultation } from 'src/consultations/consultation.entity';
 
 @Entity('remissions')
+@Unique(["patient","toDepartment","createdAt"])
 @TableInheritance({ column: { type: 'varchar', name: 'type' } })
 export abstract class Remission {
   @PrimaryGeneratedColumn('uuid')
