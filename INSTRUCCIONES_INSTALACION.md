@@ -27,13 +27,39 @@ npm run dev
 
 
 NOTAS SOBRE COMO CONFIGURAR PGADMIN (SOLO PARA CUANDO SEA NECESARIO HACERLO PARA TRABAJAR CON LA BASE DE DATOS)
-Conectar 
-Perfecto 🔥
-Vamos paso a paso — te voy a enseñar **cómo conectar pgAdmin (en Docker)** con tu **contenedor PostgreSQL (también en Docker)** para poder ver tus bases, tablas y datos directamente desde la interfaz web de pgAdmin.
 
 ---
 
-## 🧩 1️⃣ Asegúrate de que ambos contenedores estén corriendo
+# ✅ **NOTAS SOBRE CÓMO CONFIGURAR PGADMIN con las referencias al docker-compose.yml**
+
+```yaml
+# docker-compose.yml
+services:
+  postgres:
+    image: postgres:15
+    container_name: policlinic_postgres
+    environment:
+      POSTGRES_USER: policlinic
+      POSTGRES_PASSWORD: policlinicpass
+      POSTGRES_DB: poldb
+    ports:
+      - "5436:5432"
+```
+
+```yaml
+  pgadmin:
+    image: dpage/pgadmin4:8
+    container_name: policlinic_pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@policlinic.com
+      PGADMIN_DEFAULT_PASSWORD: admin123
+    ports:
+      - "5050:80"
+```
+
+---
+
+# 🧩 **1️⃣ Verifica que PostgreSQL y pgAdmin están corriendo**
 
 Ejecuta:
 
@@ -41,102 +67,205 @@ Ejecuta:
 docker ps
 ```
 
-Deberías ver algo así:
+Debes ver los contenedores definidos en tu compose:
 
-```
-CONTAINER ID   NAMES                IMAGE                  STATUS
-d4f3b1234abc   policlinic_pgadmin   dpage/pgadmin4:8       Up 2 minutes (healthy)
-a7c9d9876def   policlinic_postgres  postgres:15            Up 2 minutes (healthy)
+### Fragmento del compose:
+
+```yaml
+container_name: policlinic_postgres
+container_name: policlinic_pgadmin
 ```
 
-👉 Si ambos están corriendo, seguimos.
-Si no, levántalos con:
+Si no aparecen:
 
 ```bash
-docker compose -f docker-compose-db.yml up -d
+docker compose up -d
 ```
 
 ---
 
-## 🧩 2️⃣ Accede a **pgAdmin** desde el navegador
+# 🧩 **2️⃣ Abrir pgAdmin**
 
-Abre tu navegador y ve a:
-
-```
-http://localhost:8080
-```
-
-(o el puerto que tengas configurado para `pgadmin` en tu `docker-compose-db.yml`).
-
-### Si no recuerdas las credenciales:
-
-Busca en tu archivo YAML algo así:
+En tu docker compose, pgAdmin expone el puerto:
 
 ```yaml
-environment:
-  - PGADMIN_DEFAULT_EMAIL=admin@correo.com
-  - PGADMIN_DEFAULT_PASSWORD=admin123
+ports:
+  - "5050:80"
 ```
 
-🔑 Esas son las credenciales que usas para iniciar sesión en pgAdmin.
+Esto significa:
 
----
+📌 **pgAdmin URL:**
 
-## 🧩 3️⃣ Conecta **pgAdmin → PostgreSQL**
+```
+http://localhost:5050
+```
 
-Una vez dentro de pgAdmin:
-
-1. En el panel izquierdo, haz clic derecho en **Servers → Register → Server…**
-2. Te aparecerá una ventana con dos pestañas: **General** y **Connection**.
-
-### En la pestaña **General**
-
-* **Name:** ponle un nombre identificativo, por ejemplo `PoliclinicDB`
-
-### En la pestaña **Connection**
-
-Completa los siguientes campos:
-
-| Campo                    | Valor                                                 | Explicación                                                                        |
-| ------------------------ | ----------------------------------------------------- | ---------------------------------------------------------------------------------- |
-| **Host name / address**  | `policlinic_postgres`                                 | Es el **nombre del contenedor de PostgreSQL** (Docker lo resuelve por red interna) |
-| **Port**                 | `5432`                                                | Puerto estándar de Postgres                                                        |
-| **Maintenance database** | `postgres`                                            | Base inicial (puede ser otra si ya creaste una)                                    |
-| **Username**             | `policlinic`                                            | Usuario por defecto de Postgres                                                    |
-| **Password**             | la que pusiste en `POSTGRES_PASSWORD` dentro del YAML que seria policlinicpass |                                                                                    |
-
-Luego marca la casilla **Save password** ✅
-y pulsa **Save**.
-
----
-
-## 🧩 4️⃣ Verifica la conexión
-
-* Si todo está bien, verás en el panel izquierdo un nuevo servidor.
-* Ábrelo → **Databases → (nombre de tu BD) → Schemas → public → Tables**
-* Y ahí ya podrás navegar las tablas, columnas, constraints, datos, etc.
-
----
-
-## 🧠 ¿Por qué “policlinic_postgres” como Host?
-
-Porque Docker Compose crea una **red interna** donde cada contenedor puede acceder al otro usando su **nombre de servicio**.
-Ejemplo (dentro del YAML):
+### Credenciales (según compose):
 
 ```yaml
-services:
-  policlinic_postgres:
-    image: postgres:15
-  policlinic_pgadmin:
-    image: dpage/pgadmin4:8
+PGADMIN_DEFAULT_EMAIL: admin@policlinic.com
+PGADMIN_DEFAULT_PASSWORD: admin123
 ```
 
-Entonces, desde pgAdmin:
-
-```
-Host name = policlinic_postgres
-```
-
-👉 *No uses `localhost`*, porque eso apuntaría al **contenedor de pgAdmin**, no al de tu máquina.
+Úsalas para iniciar sesión.
 
 ---
+
+# 🧩 **3️⃣ Registrar PostgreSQL dentro de pgAdmin**
+
+Una vez dentro:
+
+1. Clic derecho en **Servers**
+2. → **Register**
+3. → **Server…**
+
+---
+
+## 🏷️ **Pestaña General**
+
+**Name:**
+
+```
+PoliclinicDB
+```
+
+(Tú eliges el nombre, no afecta la conexión)
+
+---
+
+## 🔌 **Pestaña Connection**
+
+A continuación, cada campo con su valor + referencia al compose.
+
+---
+
+### ✔ **Host name / Address**
+
+💡 Lo tomamos de:
+
+```yaml
+container_name: policlinic_postgres
+```
+
+📌 Usar:
+
+```
+policlinic_postgres
+```
+
+---
+
+### ✔ **Port**
+
+En el compose:
+
+```yaml
+ports:
+  - "5436:5432"
+```
+
+* **5436** = puerto externo
+* **5432** = puerto interno del contenedor
+
+pgAdmin está dentro de Docker → debe usar el **puerto interno**.
+
+📌 Usar:
+
+```
+5432
+```
+
+---
+
+### ✔ **Maintenance database**
+
+Lo tomamos de:
+
+```yaml
+POSTGRES_DB: poldb
+```
+
+📌 Usar:
+
+```
+poldb
+```
+
+---
+
+### ✔ **Username**
+
+Del compose:
+
+```yaml
+POSTGRES_USER: policlinic
+```
+
+📌 Usar:
+
+```
+policlinic
+```
+
+---
+
+### ✔ **Password**
+
+Del compose:
+
+```yaml
+POSTGRES_PASSWORD: policlinicpass
+```
+
+📌 Usar:
+
+```
+policlinicpass
+```
+
+---
+
+### ✔ Marcar "Save Password"
+
+Para no tener que escribirla cada vez.
+
+Finalmente clic en:
+
+```
+Save
+```
+
+---
+
+# 🧩 **4️⃣ Verificar la conexión**
+
+Si todo está bien verás:
+
+```
+Servers
+ └── PoliclinicDB
+      └── Databases
+            └── poldb
+                 └── Schemas
+                      └── public
+```
+
+---
+
+# ⭐ RESUMEN FINAL DE VALORES CON FUENTE EN EL COMPOSE
+
+| Campo pgAdmin          | Valor a usar            | De dónde sale en docker-compose       |
+| ---------------------- | ----------------------- | ------------------------------------- |
+| Host                   | `policlinic_postgres`   | `container_name: policlinic_postgres` |
+| Port                   | `5432`                  | `"5436:5432"` (puerto interno)        |
+| Maintenance DB         | `poldb`                 | `POSTGRES_DB: poldb`                  |
+| Username               | `policlinic`            | `POSTGRES_USER: policlinic`           |
+| Password               | `policlinicpass`        | `POSTGRES_PASSWORD: policlinicpass`   |
+| Login pgAdmin email    | `admin@policlinic.com`  | `PGADMIN_DEFAULT_EMAIL`               |
+| Login pgAdmin password | `admin123`              | `PGADMIN_DEFAULT_PASSWORD`            |
+| URL pgAdmin            | `http://localhost:5050` | `"5050:80"`                           |
+
+---
+
+Si quieres, te genero esta guía **en formato README.md** lista para copiar a tu repositorio. ¿Quieres que te la prepare?
