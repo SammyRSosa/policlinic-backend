@@ -5,10 +5,10 @@ import {
   OneToMany,
   OneToOne,
 } from 'typeorm';
-import { InternalRemission, ExternalRemission } from 'src/remissions/remission.entity';
-import { EmergencyConsultation } from 'src/consultations/consultation.entity';
-import { ClinicHistory } from 'src/clinic-histories/clinic-history.entity';
-import { User } from 'src/users/user.entity';
+import { InternalRemission, ExternalRemission } from '../remissions/remission.entity';
+import { EmergencyConsultation } from '../consultations/consultation.entity';
+import { ClinicHistory } from '../clinic-histories/clinic-history.entity';
+import { User } from '../users/user.entity';
 
 @Entity('patients')
 export class Patient {

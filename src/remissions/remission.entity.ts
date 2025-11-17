@@ -10,9 +10,10 @@ import {
   ChildEntity,
   Unique,
 } from 'typeorm';
-import { Patient } from 'src/patients/patient.entity';
-import { Department } from 'src/departments/department.entity';
-import { Consultation } from 'src/consultations/consultation.entity';
+import { Patient } from '../patients/patient.entity';
+import { Department } from '../departments/department.entity';
+import { Consultation } from '../consultations/consultation.entity';
+import { MedicalPost } from '../medical-posts/medical-post.entity';
 
 @Entity('remissions')
 @Unique(["patient","toDepartment","createdAt"])
@@ -42,4 +43,8 @@ export class InternalRemission extends Remission {
 }
 
 @ChildEntity('external')
-export class ExternalRemission extends Remission {}
+export class ExternalRemission extends Remission {
+  @ManyToOne(() => MedicalPost, { nullable: false })
+  @JoinColumn({ name: 'medical_post_id' })
+  medicalPost: MedicalPost;
+}

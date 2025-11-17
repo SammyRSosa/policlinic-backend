@@ -6,8 +6,8 @@ import {
   Column,
   Unique,
 } from 'typeorm';
-import { Worker } from 'src/workers/worker.entity';
-import { Department } from 'src/departments/department.entity';
+import { Worker } from '../workers/worker.entity';
+import { Department } from '../departments/department.entity';
 
 @Entity('heads_of_departments')
 @Unique(['worker', 'assignedAt'])

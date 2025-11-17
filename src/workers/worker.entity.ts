@@ -6,10 +6,10 @@ import {
   OneToMany,
   OneToOne,
 } from 'typeorm';
-import { Department } from 'src/departments/department.entity';
-import { Consultation } from 'src/consultations/consultation.entity';
-import { WorkerDepartment } from 'src/workers-department/worker-department.entity';
-import { User } from 'src/users/user.entity';
+import { Department } from '../departments/department.entity';
+import { Consultation } from '../consultations/consultation.entity';
+import { WorkerDepartment } from '../workers-department/worker-department.entity';
+import { User } from '../users/user.entity';
 
 export enum WorkerRole {
   ADMIN = 'admin',

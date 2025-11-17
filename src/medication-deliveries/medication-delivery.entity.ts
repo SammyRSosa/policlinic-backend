@@ -3,11 +3,13 @@ import {
   PrimaryGeneratedColumn,
   Column,
   ManyToOne,
+  OneToMany,
   CreateDateColumn,
+  Unique,
 } from 'typeorm';
-import { Medication } from 'src/medications/medication.entity';
-import { Department } from 'src/departments/department.entity';
-import { Worker } from 'src/workers/worker.entity';
+import { Department } from '../departments/department.entity';
+import { Worker } from '../workers/worker.entity';
+import { MedicationDeliveryItem } from '../medication-deliveries-items/medication-delivery-item.entity';
 
 export enum DeliveryStatus {
   PENDING = 'pending',
@@ -16,23 +18,30 @@ export enum DeliveryStatus {
 }
 
 @Entity('medication_deliveries')
+@Unique([ 'department', 'createdAt'])
 export class MedicationDelivery {
   @PrimaryGeneratedColumn('uuid')
   id: string;
-
-  @ManyToOne(() => Medication, { nullable: false })
-  medication: Medication;
 
   @ManyToOne(() => Department, { nullable: false })
   department: Department;
 
   @ManyToOne(() => Worker, { nullable: true })
-  requestedBy?: Worker; // Head of department who requested
+  requestedBy?: Worker;
 
-  @Column({ type: 'int', default: 0 })
-  quantity: number;
+  /** AHORA LA RELACIÓN ES ONE TO MANY CON ITEMS */
+  @OneToMany(
+    () => MedicationDeliveryItem,
+    (item) => item.medicationDelivery,
+    { cascade: true, eager: true }
+  )
+  items: MedicationDeliveryItem[];
 
-  @Column({ type: 'enum', enum: DeliveryStatus, default: DeliveryStatus.PENDING })
+  @Column({
+    type: 'enum',
+    enum: DeliveryStatus,
+    default: DeliveryStatus.PENDING,
+  })
   status: DeliveryStatus;
 
   @CreateDateColumn()

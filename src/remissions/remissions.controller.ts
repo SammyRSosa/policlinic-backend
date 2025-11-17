@@ -11,8 +11,8 @@ export class RemissionsController {
   }
 
   @Post('external')
-  createExternal(@Body() body: { patientId: string; toDepartmentId: string }) {
-    return this.remissionsService.createExternal(body.patientId, body.toDepartmentId);
+  createExternal(@Body() body: { patientId: string; toDepartmentId: string; medicalPostId: number }) {
+    return this.remissionsService.createExternal(body.patientId, body.toDepartmentId, body.medicalPostId);
   }
 
   @Get()

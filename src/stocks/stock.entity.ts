@@ -4,12 +4,14 @@ import {
   Column,
   ManyToOne,
   OneToMany,
+  Unique,
 } from 'typeorm';
-import { Department } from 'src/departments/department.entity';
-import { Medication } from 'src/medications/medication.entity';
-import { StockItem } from 'src/stock-items/stock-item.entity';
+import { Department } from '../departments/department.entity';
+import { Medication } from '../medications/medication.entity';
+import { StockItem } from '../stock-items/stock-item.entity';
 
 @Entity('stocks')
+@Unique(['medication', 'department'])
 export class Stock {
   @PrimaryGeneratedColumn('uuid')
   id: string;

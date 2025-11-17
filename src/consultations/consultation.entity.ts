@@ -11,13 +11,13 @@ import {
   OneToMany,
   Unique,
 } from 'typeorm';
-import { Patient } from 'src/patients/patient.entity';
-import { Worker } from 'src/workers/worker.entity';
-import { Department } from 'src/departments/department.entity';
-import { InternalRemission } from 'src/remissions/remission.entity';
-import { ExternalRemission } from 'src/remissions/remission.entity';
-import { ClinicHistory } from 'src/clinic-histories/clinic-history.entity';
-import { ConsultationPrescription } from 'src/consultations-prescriptions/consultations-prescription.entity';
+import { Patient } from '../patients/patient.entity';
+import { Worker } from '../workers/worker.entity';
+import { Department } from '../departments/department.entity';
+import { InternalRemission } from '../remissions/remission.entity';
+import { ExternalRemission } from '../remissions/remission.entity';
+import { ClinicHistory } from '../clinic-histories/clinic-history.entity';
+import { ConsultationPrescription } from '../consultations-prescriptions/consultations-prescription.entity';
 
 export enum ConsultationStatus {
   PENDING = 'pending',

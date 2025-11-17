@@ -7,8 +7,19 @@ export class MedicationDeliveryController {
   constructor(private readonly service: MedicationDeliveryService) {}
 
   @Post()
-  create(@Body() body: { medicationId: string; departmentId: string; quantity: number; requestedById?: string }) {
-    return this.service.create(body.medicationId, body.departmentId, body.quantity, body.requestedById);
+  create(
+    @Body()
+    body: {
+      departmentId: string;
+      requestedById?: string;
+      items: { medicationId: string; quantity: number }[];
+    },
+  ) {
+    return this.service.create(
+      body.departmentId,
+      body.requestedById,
+      body.items,
+    );
   }
 
   @Get()

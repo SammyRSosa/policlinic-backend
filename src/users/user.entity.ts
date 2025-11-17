@@ -5,8 +5,8 @@ import {
   OneToOne,
   JoinColumn,
 } from 'typeorm';
-import { Worker } from 'src/workers/worker.entity';
-import { Patient } from 'src/patients/patient.entity';
+import { Worker } from '../workers/worker.entity';
+import { Patient } from '../patients/patient.entity';
 
 export enum UserRole {
   ADMIN = 'admin',

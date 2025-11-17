@@ -5,6 +5,7 @@ import { Remission, InternalRemission, ExternalRemission } from './remission.ent
 import { Patient } from 'src/patients/patient.entity';
 import { Department } from 'src/departments/department.entity';
 import { Consultation } from 'src/consultations/consultation.entity';
+import { MedicalPost } from 'src/medical-posts/medical-post.entity';
 
 @Injectable()
 export class RemissionsService {
@@ -21,6 +22,8 @@ export class RemissionsService {
     private departmentsRepo: Repository<Department>,
     @InjectRepository(Consultation)
     private consultationsRepo: Repository<Consultation>,
+    @InjectRepository(MedicalPost)
+    private medicalPostsRepo: Repository<MedicalPost>,
   ) {}
 
   async createInternal(patientId: string, fromDepartmentId: string, toDepartmentId: string) {
@@ -37,14 +40,22 @@ export class RemissionsService {
     return this.internalRepo.save(remission);
   }
 
-  async createExternal(patientId: string, toDepartmentId: string) {
+  async createExternal(patientId: string, toDepartmentId: string, medicalPostId: number) {
     const patient = await this.patientsRepo.findOne({ where: { id: patientId } });
     if (!patient) throw new NotFoundException('Patient not found');
 
     const toDepartment = await this.departmentsRepo.findOne({ where: { id: toDepartmentId } });
     if (!toDepartment) throw new NotFoundException('Department not found');
 
-    const remission = this.externalRepo.create({ patient, toDepartment });
+    const medicalPost = await this.medicalPostsRepo.findOne({ where: { id: medicalPostId } });
+    if (!medicalPost) throw new NotFoundException('Medical post not found');
+
+    const remission = this.externalRepo.create({
+      patient,
+      toDepartment,
+      medicalPost,
+    });
+
     return this.externalRepo.save(remission);
   }
 

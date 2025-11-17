@@ -6,6 +6,7 @@ import {
   OneToMany,
   CreateDateColumn,
   UpdateDateColumn,
+  Unique,
 } from 'typeorm';
 import { Department } from 'src/departments/department.entity';
 import { HeadOfDepartment } from 'src/heads-of-departments/head-of-department.entity';
@@ -18,6 +19,7 @@ export enum MedicationOrderStatus {
 }
 
 @Entity('medication_orders')
+@Unique([ 'department', 'requestedAt'])
 export class MedicationOrder {
   @PrimaryGeneratedColumn('uuid')
   id: string;

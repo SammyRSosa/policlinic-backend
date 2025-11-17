@@ -1,6 +1,6 @@
 import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm';
-import { ConsultationPrescription } from 'src/consultations-prescriptions/consultations-prescription.entity';
-import { Stock } from 'src/stocks/stock.entity';
+import { ConsultationPrescription } from '../consultations-prescriptions/consultations-prescription.entity';
+import { Stock } from '../stocks/stock.entity';
 
 @Entity('medications')
 export class Medication {

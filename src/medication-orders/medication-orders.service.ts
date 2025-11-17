@@ -2,10 +2,10 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { MedicationOrder, MedicationOrderStatus } from './medication-order.entity';
-import { MedicationOrderItem } from 'src/medication-order-items/medication-order-item.entity';
-import { Department } from 'src/departments/department.entity';
-import { HeadOfDepartment } from 'src/heads-of-departments/head-of-department.entity';
-import { StockItem } from 'src/stock-items/stock-item.entity';
+import { MedicationOrderItem } from '../medication-order-items/medication-order-item.entity';
+import { Department } from '../departments/department.entity';
+import { HeadOfDepartment } from '../heads-of-departments/head-of-department.entity';
+import { StockItem } from '../stock-items/stock-item.entity';
 
 @Injectable()
 export class MedicationOrdersService {

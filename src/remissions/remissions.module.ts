@@ -6,6 +6,7 @@ import { Department } from 'src/departments/department.entity';
 import { Consultation } from 'src/consultations/consultation.entity';
 import { RemissionsService } from './remissions.service';
 import { RemissionsController } from './remissions.controller';
+import { MedicalPost } from 'src/medical-posts/medical-post.entity';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { RemissionsController } from './remissions.controller';
       Patient,
       Department,
       Consultation,
+      MedicalPost,
     ]),
   ],
   providers: [RemissionsService],
