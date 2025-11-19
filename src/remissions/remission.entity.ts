@@ -15,7 +15,7 @@ import { Department } from 'src/departments/department.entity';
 import { Consultation } from 'src/consultations/consultation.entity';
 
 @Entity('remissions')
-@Unique(["patient","toDepartment","createdAt"])
+@Unique(['patient', 'toDepartment', 'createdAt'])
 @TableInheritance({ column: { type: 'varchar', name: 'type' } })
 export abstract class Remission {
   @PrimaryGeneratedColumn('uuid')
@@ -30,6 +30,9 @@ export abstract class Remission {
   @CreateDateColumn()
   createdAt: Date;
 
+  @CreateDateColumn()
+  date: Date;
+
   @OneToOne(() => Consultation, { nullable: true, cascade: true })
   @JoinColumn()
   consultation?: Consultation;
@@ -42,4 +45,7 @@ export class InternalRemission extends Remission {
 }
 
 @ChildEntity('external')
-export class ExternalRemission extends Remission {}
+export class ExternalRemission extends Remission {
+  @Column()
+  fromPost: string;
+}
