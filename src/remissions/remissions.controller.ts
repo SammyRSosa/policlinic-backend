@@ -6,8 +6,19 @@ export class RemissionsController {
   constructor(private readonly remissionsService: RemissionsService) {}
 
   @Post('internal')
-  createInternal(@Body() body: { patientId: string; fromDepartmentId: string; toDepartmentId: string }) {
-    return this.remissionsService.createInternal(body.patientId, body.fromDepartmentId, body.toDepartmentId);
+  createInternal(
+    @Body()
+    body: {
+      patientId: string;
+      fromDepartmentId: string;
+      toDepartmentId: string;
+    },
+  ) {
+    return this.remissionsService.createInternal(
+      body.patientId,
+      body.fromDepartmentId,
+      body.toDepartmentId,
+    );
   }
 
   @Post('external')

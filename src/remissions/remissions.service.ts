@@ -1,7 +1,11 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Remission, InternalRemission, ExternalRemission } from './remission.entity';
+import {
+  Remission,
+  InternalRemission,
+  ExternalRemission,
+} from './remission.entity';
 import { Patient } from 'src/patients/patient.entity';
 import { Department } from 'src/departments/department.entity';
 import { Consultation } from 'src/consultations/consultation.entity';
@@ -26,17 +30,32 @@ export class RemissionsService {
     private medicalPostsRepo: Repository<MedicalPost>,
   ) {}
 
-  async createInternal(patientId: string, fromDepartmentId: string, toDepartmentId: string) {
-    const patient = await this.patientsRepo.findOne({ where: { id: patientId } });
+  async createInternal(
+    patientId: string,
+    fromDepartmentId: string,
+    toDepartmentId: string,
+  ) {
+    const patient = await this.patientsRepo.findOne({
+      where: { id: patientId },
+    });
     if (!patient) throw new NotFoundException('Patient not found');
 
-    const fromDepartment = await this.departmentsRepo.findOne({ where: { id: fromDepartmentId } });
-    if (!fromDepartment) throw new NotFoundException('From department not found');
+    const fromDepartment = await this.departmentsRepo.findOne({
+      where: { id: fromDepartmentId },
+    });
+    if (!fromDepartment)
+      throw new NotFoundException('From department not found');
 
-    const toDepartment = await this.departmentsRepo.findOne({ where: { id: toDepartmentId } });
+    const toDepartment = await this.departmentsRepo.findOne({
+      where: { id: toDepartmentId },
+    });
     if (!toDepartment) throw new NotFoundException('To department not found');
 
-    const remission = this.internalRepo.create({ patient, fromDepartment, toDepartment });
+    const remission = this.internalRepo.create({
+      patient,
+      fromDepartment,
+      toDepartment,
+    });
     return this.internalRepo.save(remission);
   }
 
@@ -44,7 +63,9 @@ export class RemissionsService {
     const patient = await this.patientsRepo.findOne({ where: { id: patientId } });
     if (!patient) throw new NotFoundException('Patient not found');
 
-    const toDepartment = await this.departmentsRepo.findOne({ where: { id: toDepartmentId } });
+    const toDepartment = await this.departmentsRepo.findOne({
+      where: { id: toDepartmentId },
+    });
     if (!toDepartment) throw new NotFoundException('Department not found');
 
     const medicalPost = await this.medicalPostsRepo.findOne({ where: { id: medicalPostId } });
@@ -60,11 +81,16 @@ export class RemissionsService {
   }
 
   async findAll() {
-    return this.remissionsRepo.find({ relations: ['patient', 'toDepartment', 'consultation'] });
+    return this.remissionsRepo.find({
+      relations: ['patient', 'toDepartment', 'consultation'],
+    });
   }
 
   async findOne(id: string) {
-    const remission = await this.remissionsRepo.findOne({ where: { id }, relations: ['patient', 'toDepartment', 'consultation'] });
+    const remission = await this.remissionsRepo.findOne({
+      where: { id },
+      relations: ['patient', 'toDepartment', 'consultation'],
+    });
     if (!remission) throw new NotFoundException('Remission not found');
     return remission;
   }
