@@ -7,8 +7,8 @@ import {
   CreateDateColumn,
   OneToOne,
 } from 'typeorm';
-import { Patient } from 'src/patients/patient.entity';
-import { Consultation } from 'src/consultations/consultation.entity';
+import { Patient } from '../patients/patient.entity';
+import { Consultation } from '../consultations/consultation.entity';
 
 @Entity('clinic_histories')
 export class ClinicHistory {

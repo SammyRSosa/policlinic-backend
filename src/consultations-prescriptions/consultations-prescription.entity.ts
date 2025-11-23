@@ -5,8 +5,8 @@ import {
   Column,
   Unique,
 } from 'typeorm';
-import { Consultation } from 'src/consultations/consultation.entity';
-import { Medication } from 'src/medications/medication.entity'; // We'll create a Medication entity later
+import { Consultation } from '../consultations/consultation.entity';
+import { Medication } from '../medications/medication.entity'; // We'll create a Medication entity later
 
 @Entity('consultation_prescriptions')
 @Unique(["consultation","medication"])

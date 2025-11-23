@@ -6,12 +6,12 @@ import {
   OneToOne,
   JoinColumn,
 } from 'typeorm';
-import { Worker } from 'src/workers/worker.entity';
-import { Stock } from 'src/stocks/stock.entity';
-import { Consultation, ProgrammedConsultation } from 'src/consultations/consultation.entity';
-import { ExternalRemission, InternalRemission, Remission } from 'src/remissions/remission.entity';
-import { HeadOfDepartment } from 'src/heads-of-departments/head-of-department.entity';
-import { WorkerDepartment } from 'src/workers-department/worker-department.entity';
+import { Worker } from '../workers/worker.entity';
+import { Stock } from '../stocks/stock.entity';
+import { Consultation, ProgrammedConsultation } from '../consultations/consultation.entity';
+import { ExternalRemission, InternalRemission, Remission } from '../remissions/remission.entity';
+import { HeadOfDepartment } from '../heads-of-departments/head-of-department.entity';
+import { WorkerDepartment } from '../workers-department/worker-department.entity';
 
 @Entity('departments')
 export class Department {

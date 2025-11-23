@@ -1,5 +1,5 @@
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne } from 'typeorm';
-import { Stock } from 'src/stocks/stock.entity';
+import { Stock } from '../stocks/stock.entity';
 
 @Entity('stock_items')
 export class StockItem {
