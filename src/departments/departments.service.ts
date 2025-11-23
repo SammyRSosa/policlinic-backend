@@ -4,7 +4,7 @@ import { Repository } from 'typeorm';
 import { Department } from './department.entity';
 import { Stock } from 'src/stocks/stock.entity';
 import { HeadOfDepartment } from 'src/heads-of-departments/head-of-department.entity';
-import { Worker } from 'src/workers/worker.entity';
+import { Worker, WorkerRole } from 'src/workers/worker.entity';
 
 @Injectable()
 export class DepartmentsService {
@@ -20,7 +20,7 @@ export class DepartmentsService {
 
     @InjectRepository(Worker)
     private readonly workersRepo: Repository<Worker>,
-  ) { }
+  ) {}
 
   async findByHead(headCode: string) {
     return this.departmentsRepo
@@ -33,8 +33,14 @@ export class DepartmentsService {
 
   async create(name: string, headWorkerId: string) {
     // 1. Find the worker who will be the head
-    const worker = await this.workersRepo.findOne({ where: { id: headWorkerId } });
+    const worker = await this.workersRepo.findOne({
+      where: { id: headWorkerId },
+    });
     if (!worker) throw new NotFoundException('Worker not found');
+
+    
+    worker.role = WorkerRole.HEAD_OF_DEPARTMENT; // <-- put the correct enum if needed, e.g. WorkerRole.HEAD
+    await this.workersRepo.save(worker);
 
     // 2. Create the HeadOfDepartment entity
     const head = this.headsRepo.create({
@@ -65,7 +71,6 @@ export class DepartmentsService {
 
     return department;
   }
-
 
   async findAll() {
     return this.departmentsRepo.find();
