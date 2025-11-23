@@ -10,6 +10,7 @@ export class CreateWorkerDto {
   lastName: string;
 
   @IsString()
+  @IsOptional()
   code: string;
 
   @IsEnum(WorkerRole)

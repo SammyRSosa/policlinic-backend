@@ -14,7 +14,7 @@ export class Stock {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @ManyToOne(() => Medication, (medication) => medication.stocks, { nullable: false })
+  @ManyToOne(() => Medication, (medication) => medication.stocks, { nullable: true })
   medication: Medication;
 
   @ManyToOne(() => Department, (department) => department.stocks, { nullable: true })
