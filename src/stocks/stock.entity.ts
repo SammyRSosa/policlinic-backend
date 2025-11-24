@@ -16,10 +16,14 @@ export class Stock {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @ManyToOne(() => Medication, (medication) => medication.stocks, { nullable: true })
+  @ManyToOne(() => Medication, (medication) => medication.stocks, {
+    nullable: true,
+  })
   medication: Medication;
 
-  @ManyToOne(() => Department, (department) => department.stocks, { nullable: true })
+  @ManyToOne(() => Department, (department) => department.stocks, {
+    nullable: true,
+  })
   department?: Department; // null means main storage
 
   @Column({ type: 'int', default: 0 })
@@ -33,5 +37,4 @@ export class Stock {
 
   @OneToMany(() => StockItem, (item) => item.stock)
   items: StockItem[];
-
 }
