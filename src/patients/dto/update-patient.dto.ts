@@ -28,5 +28,5 @@ export class UpdatePatientDto {
 
   @IsDate()
   @IsOptional()
-  dateofBirth?: Date;
+  dateOfBirth?: Date;
 }
