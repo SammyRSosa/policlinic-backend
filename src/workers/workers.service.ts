@@ -84,5 +84,15 @@ export class WorkersService {
     if (!worker) throw new NotFoundException('User not found');
     return this.workersRepo.remove(worker);
   }
+
+  async getWorkersByDepartment(departmentId: string) {
+  const workers = await this.workersRepo.find({
+    where: { department: { id: departmentId } },
+    relations: ['department'],
+    order: { firstName: 'ASC' },
+  });
+
+  return workers;
+}
 }
 

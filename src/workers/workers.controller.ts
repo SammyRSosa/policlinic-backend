@@ -35,4 +35,11 @@ export class WorkersController {
   remove(@Param('id') id: string) {
     return this.service.remove(id);
   }
+
+  @Get('department/:departmentId')
+  getByDepartment(
+    @Param('departmentId') departmentId: string,
+  ) {
+    return this.service.getWorkersByDepartment(departmentId);
+  }
 }
