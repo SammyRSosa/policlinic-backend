@@ -47,6 +47,22 @@ export class ClinicHistoryService {
   return history;
 }
 
+  async findByPatient(patientId: string, user: any) {
+    const patient = await this.patientsRepo.findOne({ where: { id: patientId } });
+    if (!patient) throw new NotFoundException('Patient not found');
+
+    // Patients can only access their own clinic histories
+    if (user.role === UserRole.PATIENT && user.patient?.id !== patientId) {
+      throw new ForbiddenException('You can only view your own clinic histories');
+    }
+
+    return this.historyRepo.find({
+      where: { patient: { id: patientId } },
+      relations: ['patient', 'consultations'],
+      order: { createdAt: 'DESC' },
+    });
+  }
+
   async update(id: string, notes: string) {
     const history = await this.findOne(id);
     history.notes = notes;

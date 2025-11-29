@@ -32,6 +32,13 @@ export class ClinicHistoryController {
     return this.service.findOneSecured(id, req.user);
   }
 
+  // 📋 Get all clinic histories by patient
+  @Get('by-patient/:patientId')
+  @Roles(UserRole.ADMIN, UserRole.HEAD_OF_DEPARTMENT, UserRole.DOCTOR, UserRole.PATIENT)
+  async getByPatient(@Param('patientId') patientId: string, @Req() req) {
+    return this.service.findByPatient(patientId, req.user);
+  }
+
   // 🧾 Update only for authorized medical staff
   @Patch(':id')
   @Roles(UserRole.DOCTOR, UserRole.HEAD_OF_DEPARTMENT)
