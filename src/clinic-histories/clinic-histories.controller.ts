@@ -32,6 +32,13 @@ export class ClinicHistoryController {
     return this.service.findOneSecured(id, req.user);
   }
 
+  // 👨‍⚕️ Get my own clinic history (patient-specific)
+  @Get('my-history/own')
+  @Roles(UserRole.PATIENT)
+  async getMyHistory(@Req() req) {
+    return this.service.getMyClinicHistory(req.user.id);
+  }
+
   // 📋 Get all clinic histories by patient
   @Get('by-patient/:patientId')
   @Roles(UserRole.ADMIN, UserRole.HEAD_OF_DEPARTMENT, UserRole.DOCTOR, UserRole.PATIENT)

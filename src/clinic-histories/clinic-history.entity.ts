@@ -2,10 +2,10 @@ import {
   Entity,
   PrimaryGeneratedColumn,
   Column,
-  ManyToOne,
+  OneToOne,
   OneToMany,
   CreateDateColumn,
-  OneToOne,
+  JoinColumn,
 } from 'typeorm';
 import { Patient } from '../patients/patient.entity';
 import { Consultation } from '../consultations/consultation.entity';
@@ -15,10 +15,11 @@ export class ClinicHistory {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @OneToOne(() => Patient, { nullable: false })
+  @OneToOne(() => Patient, (patient) => patient.clinicHistory, { nullable: false, onDelete: 'CASCADE' })
+  @JoinColumn()
   patient: Patient;
 
-  @OneToMany(() => Consultation, (consultation) => consultation.clinicHistory)
+  @OneToMany(() => Consultation, (consultation) => consultation.clinicHistory, { cascade: true })
   consultations: Consultation[];
 
   @Column({ type: 'text', nullable: true })

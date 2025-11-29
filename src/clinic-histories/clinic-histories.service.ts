@@ -3,7 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { ClinicHistory } from './clinic-history.entity';
 import { Patient } from 'src/patients/patient.entity';
-import { UserRole } from 'src/users/user.entity';
+import { User, UserRole } from 'src/users/user.entity';
 
 @Injectable()
 export class ClinicHistoryService {
@@ -12,14 +12,31 @@ export class ClinicHistoryService {
     private historyRepo: Repository<ClinicHistory>,
     @InjectRepository(Patient)
     private patientsRepo: Repository<Patient>,
+    @InjectRepository(User)
+    private usersRepo: Repository<User>,
   ) {}
 
   async create(patientId: string, notes?: string) {
     const patient = await this.patientsRepo.findOne({ where: { id: patientId } });
     if (!patient) throw new NotFoundException('Patient not found');
 
-    const history = this.historyRepo.create({ patient, notes });
-    return this.historyRepo.save(history);
+    // Check if patient already has a clinic history
+    let history = await this.historyRepo.findOne({
+      where: { patient: { id: patientId } },
+      relations: ['patient', 'consultations'],
+    });
+
+    // If not, create one
+    if (!history) {
+      history = this.historyRepo.create({ patient, notes });
+      history = await this.historyRepo.save(history);
+    } else if (notes) {
+      // Update notes if provided
+      history.notes = notes;
+      history = await this.historyRepo.save(history);
+    }
+
+    return history;
   }
 
   findAll() {
@@ -51,16 +68,42 @@ export class ClinicHistoryService {
     const patient = await this.patientsRepo.findOne({ where: { id: patientId } });
     if (!patient) throw new NotFoundException('Patient not found');
 
-    // Patients can only access their own clinic histories
-    if (user.role === UserRole.PATIENT && user.patient?.id !== patientId) {
-      throw new ForbiddenException('You can only view your own clinic histories');
+    // Patients can only access their own clinic history
+    if (user.role === UserRole.PATIENT && user.id !== patientId) {
+      throw new ForbiddenException('You can only view your own clinic history');
     }
 
-    return this.historyRepo.find({
+    let history = await this.historyRepo.findOne({
       where: { patient: { id: patientId } },
       relations: ['patient', 'consultations'],
-      order: { createdAt: 'DESC' },
     });
+
+    // Auto-create clinic history if it doesn't exist
+    if (!history) {
+      history = await this.create(patientId);
+    }
+
+    return history;
+  }
+
+  async getMyClinicHistory(userId: string) {
+    const user = await this.usersRepo.findOne({
+      where: { id: userId },
+      relations: ['patient'],
+    });
+    if (!user || !user.patient) throw new NotFoundException('Patient not found');
+
+    let history = await this.historyRepo.findOne({
+      where: { patient: { id: user.patient.id } },
+      relations: ['patient', 'consultations'],
+    });
+
+    // Auto-create clinic history if it doesn't exist
+    if (!history) {
+      history = await this.create(user.patient.id);
+    }
+
+    return history;
   }
 
   async update(id: string, notes: string) {
