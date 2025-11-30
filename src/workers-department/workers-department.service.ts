@@ -34,6 +34,16 @@ export class WorkerDepartmentService {
     return this.wdRepo.find({ relations: ['worker', 'department'] });
   }
 
+  async findByDepartment(departmentId: string) {
+    const department = await this.departmentsRepo.findOne({ where: { id: departmentId } });
+    if (!department) throw new NotFoundException('Department not found');
+
+    return this.wdRepo.find({
+      where: { department: { id: departmentId }, active: true },
+      relations: ['worker', 'department'],
+    });
+  }
+
   async findOne(id: string) {
     const assignment = await this.wdRepo.findOne({ where: { id }, relations: ['worker', 'department'] });
     if (!assignment) throw new NotFoundException('Assignment not found');

@@ -15,6 +15,11 @@ export class WorkerDepartmentController {
     return this.service.findAll();
   }
 
+  @Get('bydepartment/:departmentId')
+  findByDepartment(@Param('departmentId') departmentId: string) {
+    return this.service.findByDepartment(departmentId);
+  }
+
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.service.findOne(id);

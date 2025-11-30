@@ -22,6 +22,14 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       where: { id: payload.sub },
       relations: ['patient', 'worker'],
     });
-    return { id: payload.sub, role: payload.role, patient: user?.patient, worker: user?.worker };
+
+    return {
+      id: payload.sub,
+      role: payload.role,
+      entityId: user?.patient?.id || user?.worker?.id, // Return patient or worker ID
+      entityType: user?.patient ? 'patient' : user?.worker ? 'worker' : null, // patient or worker
+      patient: user?.patient,
+      worker: user?.worker,
+    };
   }
 }

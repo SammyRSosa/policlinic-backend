@@ -85,7 +85,10 @@ export class AuthService {
   // 🔹 Login
   async login(account: string, password: string) {
     // 1️⃣ Find user by username (or account)
-    const user = await this.userRepo.findOne({ where: { username: account } });
+    const user = await this.userRepo.findOne({
+      where: { username: account },
+      relations: ['patient', 'worker'],
+    });
     if (!user) throw new UnauthorizedException('Invalid credentials');
 
     // 2️⃣ Check password validity
@@ -97,11 +100,13 @@ export class AuthService {
       sub: user.id,           // ✅ user ID in standard JWT claim
       username: user.username,
       role: user.role,
+      entityId: user.patient?.id || user.worker?.id, // Entity (patient or worker) ID
+      entityType: user.patient ? 'patient' : user.worker ? 'worker' : null, // Type
     };
 
     // 4️⃣ Sign and return token
     const token = this.jwtService.sign(payload);
-
+    
     return {
       access_token: token,
       role: user.role,

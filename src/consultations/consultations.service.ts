@@ -40,15 +40,13 @@ export class ConsultationsService {
     private externalRemRepo: Repository<ExternalRemission>,
   ) { }
 
-  async createProgrammed(patientId: string, mainDoctorId: string, departmentId: string, scheduledAt: Date, remissionId?: string, remissionType?: 'internal' | 'external') {
+  async createProgrammed(patientId: string, mainDoctorId: string, scheduledAt: Date, remissionId?: string, remissionType?: 'internal' | 'external') {
     const patient = await this.patientsRepo.findOne({ where: { id: patientId } });
     if (!patient) throw new NotFoundException('Patient not found');
 
-    const doctor = await this.workersRepo.findOne({ where: { id: mainDoctorId } });
+    const doctor = await this.workersRepo.findOne({ where: { id: mainDoctorId }, relations: ['department'] });
     if (!doctor) throw new NotFoundException('Doctor not found');
-
-    const department = await this.departmentsRepo.findOne({ where: { id: departmentId } });
-    if (!department) throw new NotFoundException('Department not found');
+    if (!doctor.department) throw new NotFoundException('Doctor has no assigned department');
 
     let internalRemission, externalRemission;
     if (remissionId) {
@@ -61,7 +59,8 @@ export class ConsultationsService {
 
     const consultation = this.programmedRepo.create({
       mainDoctor: doctor,
-      department,
+      Doctor: doctor, // Set Doctor field as well
+      department: doctor.department,
       scheduledAt,
       internalRemission,
       externalRemission,
@@ -73,22 +72,19 @@ export class ConsultationsService {
   async createEmergency(
     patientId: string,
     mainDoctorId: string,
-    departmentId: string,
-    // remove remission params
   ) {
     const patient = await this.patientsRepo.findOne({ where: { id: patientId } });
     if (!patient) throw new NotFoundException('Patient not found');
 
-    const doctor = await this.workersRepo.findOne({ where: { id: mainDoctorId } });
+    const doctor = await this.workersRepo.findOne({ where: { id: mainDoctorId }, relations: ['department'] });
     if (!doctor) throw new NotFoundException('Doctor not found');
-
-    const department = await this.departmentsRepo.findOne({ where: { id: departmentId } });
-    if (!department) throw new NotFoundException('Department not found');
+    if (!doctor.department) throw new NotFoundException('Doctor has no assigned department');
 
     const consultation = this.emergencyRepo.create({
       patient,
       mainDoctor: doctor,
-      department,
+      Doctor: doctor, // Set Doctor field as well
+      department: doctor.department,
       status: ConsultationStatus.PENDING,
     });
 
@@ -99,6 +95,24 @@ export class ConsultationsService {
       relations: ['patient', 'mainDoctor', 'department', 'internalRemission', 'externalRemission'],
     });
   }
+
+  async findByDepartment(departmentId: string) {
+    return this.consultationsRepo.find({
+      where: { department: { id: departmentId } },
+      relations: ['mainDoctor', 'Doctor', 'clinicHistory', 'prescriptions'],
+      order: { createdAt: 'DESC' },
+    });
+  }
+
+
+  async findByWorker(workerId: string) {
+    return this.consultationsRepo.find({
+      where: { mainDoctor: { id: workerId } },
+      relations: ['department', 'clinicHistory', 'prescriptions','patient', 'mainDoctor', 'department', 'internalRemission', 'externalRemission'],
+      order: { createdAt: 'DESC' },
+    });
+  }
+
 
   async findOne(id: string) {
     const consultation = await this.consultationsRepo.findOne({

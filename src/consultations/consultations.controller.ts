@@ -1,19 +1,29 @@
-import { Controller, Post, Get, Param, Body, Patch } from '@nestjs/common';
+import { Controller, Post, Get, Param, Body, Patch, Req, UseGuards } from '@nestjs/common';
 import { ConsultationsService } from './consultations.service';
 import { ConsultationStatus } from './consultation.entity';
+import { JwtAuthGuard } from 'src/auth/jwt.guard';
+import { RolesGuard } from 'src/auth/roles.guard';
+import { Roles } from 'src/auth/roles.decorator';
+import { UserRole } from 'src/users/user.entity';
 
 @Controller('consultations')
 export class ConsultationsController {
-  constructor(private readonly service: ConsultationsService) {}
+  constructor(private readonly service: ConsultationsService) { }
 
+  // 📋 Create programmed consultation (doctor creates from token)
   @Post('programmed')
-  createProgrammed(@Body() body: { remissionId: string; mainDoctorId: string; departmentId: string; scheduledAt: Date;  remissionType?: 'internal' | 'external' }) {
-    return this.service.createProgrammed(body.remissionId, body.mainDoctorId, body.departmentId, body.scheduledAt,  body.remissionType);
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.DOCTOR, UserRole.HEAD_OF_DEPARTMENT)
+  createProgrammed(@Body() body: { remissionId?: string; scheduledAt: Date; remissionType?: 'internal' | 'external'; patientId: string }, @Req() req) {
+    return this.service.createProgrammed(body.patientId, req.user.entityId, body.scheduledAt, body.remissionId, body.remissionType);
   }
 
+  // 🚨 Create emergency consultation (doctor creates from token)
   @Post('emergency')
-  createEmergency(@Body() body: { patientId: string; mainDoctorId: string; departmentId: string; }) {
-    return this.service.createEmergency(body.patientId, body.mainDoctorId, body.departmentId,);
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.DOCTOR, UserRole.HEAD_OF_DEPARTMENT)
+  createEmergency(@Body() body: { patientId: string }, @Req() req) {
+    return this.service.createEmergency(body.patientId, req.user.entityId);
   }
 
   @Get()
@@ -24,6 +34,24 @@ export class ConsultationsController {
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.service.findOne(id);
+  }
+
+  @Get('by-department/:departmentId')
+  findByDepartment(@Param('departmentId') departmentId: string) {
+    return this.service.findByDepartment(departmentId);
+  }
+
+  @Get('by-worker/:workerId')
+  findByWorker(@Param('workerId') workerId: string) {
+    return this.service.findByWorker(workerId);
+  }
+
+  // 👨‍⚕️ Get my consultations (doctor-specific)
+  @Get('my-consultations/own')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.DOCTOR, UserRole.HEAD_OF_DEPARTMENT)
+  async getMyConsultations(@Req() req) {
+    return this.service.findByWorker(req.user.entityId);
   }
 
   @Patch(':id/status')

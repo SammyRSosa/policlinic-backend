@@ -73,7 +73,9 @@ export class DepartmentsService {
   }
 
   async findAll() {
-    return this.departmentsRepo.find();
+    return this.departmentsRepo.find({
+      relations: ['workers', 'headOfDepartment'],
+    });
   }
 
   async findOne(id: string) {
