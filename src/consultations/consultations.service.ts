@@ -43,7 +43,7 @@ export class ConsultationsService {
 
     @InjectRepository(ClinicHistory)
     private clinicHistoryRepo: Repository<ClinicHistory>,
-  ) {}
+  ) { }
 
   // -------------------------------------------------------
   //  CREATE PROGRAMMED CONSULTATION
@@ -218,10 +218,11 @@ export class ConsultationsService {
   // -------------------------------------------------------
   //  ATTACH CONSULTATION TO CLINIC HISTORY
   // -------------------------------------------------------
+
   private async attachConsultationToPatientHistory(patientId: string, consultation: Consultation) {
     const patient = await this.patientsRepo.findOne({
       where: { id: patientId },
-      relations: ['clinicHistory'],
+      relations: ['clinicHistory', 'clinicHistory.consultations'], // <-- LOAD THE CONSULTATIONS
     });
     if (!patient) throw new NotFoundException('Patient not found');
 
