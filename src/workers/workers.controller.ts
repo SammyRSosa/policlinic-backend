@@ -42,4 +42,10 @@ export class WorkersController {
   ) {
     return this.service.getWorkersByDepartment(departmentId);
   }
+
+  @Get('by-user')
+  @UseGuards(JwtAuthGuard)
+  findByUser(@Req() req) {
+    return this.service.findByUserId(req.user.id);
+  }
 }

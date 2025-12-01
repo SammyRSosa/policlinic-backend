@@ -59,6 +59,20 @@ export class WorkersService {
     return this.workersRepo.find({ relations: ['department'] });
   }
 
+
+  async findByUserId(userId: string) {
+  const worker = await this.workersRepo.findOne({
+    where: { user: { id: userId } },
+    relations: ['department', 'user']
+  });
+  
+  if (!worker) {
+    throw new NotFoundException('Worker not found for this user');
+  }
+  
+  return worker;
+}
+
   async updateWorker(
     id: string,
     updateData: UpdateWorkerDto,
