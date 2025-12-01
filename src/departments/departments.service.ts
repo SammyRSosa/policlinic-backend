@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, OnApplicationBootstrap } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Department } from './department.entity';
@@ -6,7 +6,7 @@ import { HeadOfDepartment } from 'src/heads-of-departments/head-of-department.en
 import { Worker, WorkerRole } from 'src/workers/worker.entity';
 
 @Injectable()
-export class DepartmentsService {
+export class DepartmentsService implements OnApplicationBootstrap {
   constructor(
     @InjectRepository(Department)
     private departmentsRepo: Repository<Department>,
@@ -17,6 +17,25 @@ export class DepartmentsService {
     @InjectRepository(Worker)
     private readonly workersRepo: Repository<Worker>,
   ) {}
+
+  // Este método se ejecuta al iniciar la app
+  async onApplicationBootstrap() {
+    await this.createDefaultDepartments();
+  }
+
+  // Crear departamentos predeterminados
+  private async createDefaultDepartments() {
+    const defaultDepartments = ['Droguería', 'Almacén'];
+
+    for (const name of defaultDepartments) {
+      const exists = await this.departmentsRepo.findOne({ where: { name } });
+      if (!exists) {
+        const department = this.departmentsRepo.create({ name });
+        await this.departmentsRepo.save(department);
+        console.log(`Departamento creado automáticamente: ${name}`);
+      }
+    }
+  }
 
   async findByHead(headCode: string) {
     return this.departmentsRepo
