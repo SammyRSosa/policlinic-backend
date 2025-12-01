@@ -18,6 +18,7 @@ import { InternalRemission } from '../remissions/remission.entity';
 import { ExternalRemission } from '../remissions/remission.entity';
 import { ClinicHistory } from '../clinic-histories/clinic-history.entity';
 import { ConsultationPrescription } from '../consultations-prescriptions/consultations-prescription.entity';
+import { Exclude } from 'class-transformer';
 
 export enum ConsultationStatus {
   PENDING = 'pending',
@@ -51,6 +52,7 @@ export abstract class Consultation {
   createdAt: Date;
 
   @ManyToOne(() => ClinicHistory, (history) => history.consultations, { nullable: true })
+  @Exclude()
   clinicHistory?: ClinicHistory;
 
 
