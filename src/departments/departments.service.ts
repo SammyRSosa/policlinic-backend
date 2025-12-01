@@ -5,6 +5,7 @@ import { Department } from './department.entity';
 import { HeadOfDepartment } from 'src/heads-of-departments/head-of-department.entity';
 import { Worker, WorkerRole } from 'src/workers/worker.entity';
 import { WorkerDepartment } from 'src/workers-department/worker-department.entity';
+import { User } from 'src/users/user.entity';
 
 @Injectable()
 export class DepartmentsService {
@@ -22,13 +23,33 @@ export class DepartmentsService {
     private readonly workersdepsRepo: Repository<WorkerDepartment>,
   ) { }
 
-  async findByHead(headCode: string) {
-    return this.departmentsRepo
-      .createQueryBuilder('department')
-      .leftJoinAndSelect('department.headOfDepartment', 'hod')
-      .leftJoinAndSelect('hod.worker', 'worker')
-      .where('worker.code = :code', { code: headCode })
-      .getOne();
+  // departments.service.ts
+  async findByHead(workerId: string) {
+    // Find the worker
+    const worker = await this.workersRepo.findOne({
+      where: { id: workerId },
+      relations: ['department'],
+    });
+
+    if (!worker) throw new NotFoundException('Worker not found');
+
+    // If worker has a department assigned, return it
+    if (worker.department) {
+      return this.departmentsRepo.findOne({
+        where: { id: worker.department.id },
+        relations: ['headOfDepartment', 'headOfDepartment.worker', 'workers','stockItems'],
+      });
+    }
+
+    // If worker is a head of department, find via HeadOfDepartment
+    const head = await this.headsRepo.findOne({
+      where: { worker: { id: workerId } },
+      relations: ['department', 'department.workers', 'department.headOfDepartment'],
+    });
+
+    if (!head) throw new NotFoundException('Worker not assigned to any department');
+
+    return head.department;
   }
 
   async create(name: string, headWorkerId: string) {

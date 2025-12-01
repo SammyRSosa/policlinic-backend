@@ -13,7 +13,7 @@ import { PatientsModule } from './patients/patients.module';
 import { WorkerDepartmentModule } from './workers-department/workers-department.module';
 import { ConsultationPrescriptionsModule } from './consultations-prescriptions/consultations-prescriptions.module';
 import { MedicationOrdersModule } from './medication-orders/medication-orders.module';
-import { MedicationDeliveryModule } from './medication-deliveries/medication-deliveries.module';
+import { MedicationDeliveriesModule } from './medication-deliveries/medication-deliveries.module';
 import { ClinicHistoryModule } from './clinic-histories/clinic-histories.module';
 import { HeadsOfDepartmentsModule } from './heads-of-departments/heads-of-departments.module';
 
@@ -25,6 +25,7 @@ import { SeedModule } from './seed/seed.module';
 
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthModule } from './auth/auth.module';
+import { MedicationDelivery } from './medication-deliveries/medication-delivery.entity';
 
 @Module({
   imports: [
@@ -49,7 +50,7 @@ import { AuthModule } from './auth/auth.module';
     WorkerDepartmentModule,
     ConsultationPrescriptionsModule,
     MedicationOrdersModule,
-    MedicationDeliveryModule,
+    MedicationDeliveriesModule,
     ClinicHistoryModule,
     HeadsOfDepartmentsModule,
     StockItemsModule,
