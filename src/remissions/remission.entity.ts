@@ -34,20 +34,20 @@ export abstract class Remission {
   @CreateDateColumn()
   date: Date;
 
-  @OneToOne(() => Consultation, { nullable: true, cascade: true })
+  @OneToOne(() => Consultation, { nullable: true, cascade: true,onDelete: 'CASCADE'})
   @JoinColumn()
   consultation?: Consultation;
 }
 
 @ChildEntity('internal')
 export class InternalRemission extends Remission {
-  @ManyToOne(() => Department, { nullable: false })
-  fromDepartment: Department;
+  @ManyToOne(() => Department, { nullable: true })
+  fromDepartment?: Department;
 }
 
 @ChildEntity('external')
 export class ExternalRemission extends Remission {
-  @ManyToOne(() => MedicalPost, { nullable: false })
+  @ManyToOne(() => MedicalPost, { nullable: true })
   @JoinColumn({ name: 'medical_post_id' })
-  medicalPost: MedicalPost;
+  medicalPost?: MedicalPost;
 }

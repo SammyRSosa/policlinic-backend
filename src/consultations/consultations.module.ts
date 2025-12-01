@@ -4,7 +4,7 @@ import { Consultation, ProgrammedConsultation, EmergencyConsultation } from './c
 import { Patient } from 'src/patients/patient.entity';
 import { Worker } from 'src/workers/worker.entity';
 import { Department } from 'src/departments/department.entity';
-import { InternalRemission, ExternalRemission } from 'src/remissions/remission.entity';
+import { InternalRemission, ExternalRemission, Remission } from 'src/remissions/remission.entity';
 import { ConsultationsService } from './consultations.service';
 import { ConsultationsController } from './consultations.controller';
 
@@ -19,6 +19,7 @@ import { ConsultationsController } from './consultations.controller';
       Department,
       InternalRemission,
       ExternalRemission,
+      Remission,
     ]),
   ],
   providers: [ConsultationsService],

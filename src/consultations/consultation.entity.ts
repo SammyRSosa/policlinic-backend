@@ -78,7 +78,7 @@ export class ProgrammedConsultation extends Consultation {
 
 @ChildEntity('emergency')
 export class EmergencyConsultation extends Consultation {
-  @ManyToOne(() => Patient, { nullable: false })
+  @ManyToOne(() => Patient, { nullable:true })
   patient: Patient;
 
 }

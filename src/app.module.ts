@@ -22,6 +22,7 @@ import { StockItemsModule } from './stock-items/stock-items.module';
 import { StockItemsService } from './stock-items/stocks-items.service';
 import { MedicationOrderItemsModule } from './medication-order-items/medication-order-items.module';
 import { MedicalPostsModule } from './medical-posts/medical-posts.module';
+import { SeedModule } from './seed/seed.module';  
 
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthModule } from './auth/auth.module';
@@ -58,6 +59,7 @@ import { AuthModule } from './auth/auth.module';
     MedicationOrderItemsModule,
     AuthModule,
     MedicalPostsModule,
+    SeedModule,
   ],
   controllers: [AppController],
   providers: [AppService],

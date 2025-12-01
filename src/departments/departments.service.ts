@@ -20,7 +20,7 @@ export class DepartmentsService {
 
     @InjectRepository(Worker)
     private readonly workersRepo: Repository<Worker>,
-  ) {}
+  ) { }
 
   async findByHead(headCode: string) {
     return this.departmentsRepo
@@ -38,7 +38,7 @@ export class DepartmentsService {
     });
     if (!worker) throw new NotFoundException('Worker not found');
 
-    
+
     worker.role = WorkerRole.HEAD_OF_DEPARTMENT; // <-- put the correct enum if needed, e.g. WorkerRole.HEAD
     await this.workersRepo.save(worker);
 
@@ -82,6 +82,39 @@ export class DepartmentsService {
     const department = await this.departmentsRepo.findOne({ where: { id } });
     if (!department) throw new NotFoundException('Department not found');
     return department;
+  }
+
+  async update(id: string, dto: { name?: string; headWorkerId?: string }) {
+    const department = await this.findOne(id);
+
+    if (dto.name) {
+      department.name = dto.name;
+    }
+
+    if (dto.headWorkerId) {
+      const worker = await this.workersRepo.findOne({
+        where: { id: dto.headWorkerId },
+      });
+      if (!worker) throw new NotFoundException('Worker not found');
+
+      // Check if HeadOfDepartment already exists
+      if (!department.headOfDepartment) {
+        // Create new HeadOfDepartment if it doesn't exist
+        const head = this.headsRepo.create({
+          worker,
+          department,
+        });
+        department.headOfDepartment = await this.headsRepo.save(head);
+      } else {
+        // Update existing HeadOfDepartment
+        department.headOfDepartment.worker = worker;
+        department.headOfDepartment = await this.headsRepo.save(
+          department.headOfDepartment,
+        );
+      }
+    }
+
+    return this.departmentsRepo.save(department);
   }
 
   async remove(id: string) {
