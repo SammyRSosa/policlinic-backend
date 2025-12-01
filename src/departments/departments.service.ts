@@ -4,6 +4,7 @@ import { Repository } from 'typeorm';
 import { Department } from './department.entity';
 import { HeadOfDepartment } from 'src/heads-of-departments/head-of-department.entity';
 import { Worker, WorkerRole } from 'src/workers/worker.entity';
+import { WorkerDepartment } from 'src/workers-department/worker-department.entity';
 
 @Injectable()
 export class DepartmentsService {
@@ -16,6 +17,9 @@ export class DepartmentsService {
 
     @InjectRepository(Worker)
     private readonly workersRepo: Repository<Worker>,
+
+    @InjectRepository(WorkerDepartment)
+    private readonly workersdepsRepo: Repository<WorkerDepartment>,
   ) { }
 
   async findByHead(headCode: string) {
@@ -34,39 +38,53 @@ export class DepartmentsService {
     });
     if (!worker) throw new NotFoundException('Worker not found');
 
-
-    worker.role = WorkerRole.HEAD_OF_DEPARTMENT; // <-- put the correct enum if needed, e.g. WorkerRole.HEAD
+    // 2. Update worker role to HEAD_OF_DEPARTMENT
+    worker.role = WorkerRole.HEAD_OF_DEPARTMENT;
     await this.workersRepo.save(worker);
-
-    // 2. Create the HeadOfDepartment entity
-    const head = this.headsRepo.create({
-      worker,
-      assignedAt: new Date(),
-    });
-    await this.headsRepo.save(head);
 
     // 3. Create the Department first
     const department = this.departmentsRepo.create({
       name,
-      headOfDepartment: head,
     });
     await this.departmentsRepo.save(department);
 
-    // 5. Assign the department to the head
-    head.department = department;
+    // 4. Create the HeadOfDepartment entity
+    const head = this.headsRepo.create({
+      worker,
+      department,
+      assignedAt: new Date(),
+    });
     await this.headsRepo.save(head);
+
+    // 5. Update department with head
+    department.headOfDepartment = head;
+    await this.departmentsRepo.save(department);
+
+    // 6. ✅ Assign worker to department via WorkerDepartment
+    const workerDept = new WorkerDepartment();
+    workerDept.worker = worker;
+    workerDept.department = department;
+    workerDept.active = true;
+    await this.workersdepsRepo.save(workerDept);
+
+    // 7. ✅ Update worker's current department
+    worker.department = department;
+    await this.workersRepo.save(worker);
 
     return department;
   }
 
   async findAll() {
     return this.departmentsRepo.find({
-      relations: ['workers', 'headOfDepartment'],
+      relations: ['workers', 'headOfDepartment', 'headOfDepartment.worker'],
     });
   }
 
   async findOne(id: string) {
-    const department = await this.departmentsRepo.findOne({ where: { id } });
+    const department = await this.departmentsRepo.findOne({
+      where: { id },
+      relations: ['headOfDepartment', 'headOfDepartment.worker'],
+    });
     if (!department) throw new NotFoundException('Department not found');
     return department;
   }
@@ -81,8 +99,21 @@ export class DepartmentsService {
     if (dto.headWorkerId) {
       const worker = await this.workersRepo.findOne({
         where: { id: dto.headWorkerId },
+        relations: ['department'],
       });
       if (!worker) throw new NotFoundException('Worker not found');
+
+      // Deactivate previous head assignments
+      if (department.headOfDepartment) {
+        await this.workersdepsRepo.update(
+          { worker: { id: department.headOfDepartment.worker.id }, department: { id }, active: true },
+          { active: false, leftAt: new Date() },
+        );
+      }
+
+      // Update worker role
+      worker.role = WorkerRole.HEAD_OF_DEPARTMENT;
+      await this.workersRepo.save(worker);
 
       // Check if HeadOfDepartment already exists
       if (!department.headOfDepartment) {
@@ -90,6 +121,7 @@ export class DepartmentsService {
         const head = this.headsRepo.create({
           worker,
           department,
+          assignedAt: new Date(),
         });
         department.headOfDepartment = await this.headsRepo.save(head);
       } else {
@@ -99,6 +131,17 @@ export class DepartmentsService {
           department.headOfDepartment,
         );
       }
+
+      // ✅ Assign worker to department via WorkerDepartment
+      const workerDept = new WorkerDepartment();
+      workerDept.worker = worker;
+      workerDept.department = department;
+      workerDept.active = true;
+      await this.workersdepsRepo.save(workerDept);
+
+      // ✅ Update worker's current department
+      worker.department = department;
+      await this.workersRepo.save(worker);
     }
 
     return this.departmentsRepo.save(department);
