@@ -86,6 +86,39 @@ export class RemissionsService {
     });
   }
 
+  async findByDepartment(departmentId: string) {
+    const department = await this.departmentsRepo.findOne({ where: { id: departmentId } });
+    if (!department) throw new NotFoundException('Department not found');
+
+    return this.remissionsRepo.find({
+      where: { toDepartment: { id: departmentId } },
+      relations: ['patient', 'toDepartment', 'consultation'],
+      order: { createdAt: 'DESC' },
+    });
+  }
+
+  async findFromDepartment(departmentId: string) {
+    const department = await this.departmentsRepo.findOne({ where: { id: departmentId } });
+    if (!department) throw new NotFoundException('Department not found');
+
+    return this.internalRepo.find({
+      where: { fromDepartment: { id: departmentId } },
+      relations: ['patient', 'fromDepartment', 'toDepartment', 'consultation'],
+      order: { createdAt: 'DESC' },
+    });
+  }
+
+  async findFromMedicalPost(medicalPostId: string) {
+    const medicalPost = await this.medicalPostsRepo.findOne({ where: { id: Number(medicalPostId) } });
+    if (!medicalPost) throw new NotFoundException('Medical post not found');
+
+    return this.externalRepo.find({
+      where: { medicalPost: { id: Number(medicalPostId) } },
+      relations: ['patient', 'medicalPost', 'toDepartment', 'consultation'],
+      order: { createdAt: 'DESC' },
+    });
+  }
+
   async findOne(id: string) {
     const remission = await this.remissionsRepo.findOne({
       where: { id },
@@ -93,5 +126,10 @@ export class RemissionsService {
     });
     if (!remission) throw new NotFoundException('Remission not found');
     return remission;
+  }
+
+  async remove(id: string) {
+    const remission = await this.findOne(id);
+    return this.remissionsRepo.remove(remission);
   }
 }

@@ -10,7 +10,7 @@ import {
 import { Patient } from 'src/patients/patient.entity';
 import { Worker } from 'src/workers/worker.entity';
 import { Department } from 'src/departments/department.entity';
-import { InternalRemission, ExternalRemission } from 'src/remissions/remission.entity';
+import { InternalRemission, ExternalRemission, Remission } from 'src/remissions/remission.entity';
 
 @Injectable()
 export class ConsultationsService {
@@ -33,14 +33,15 @@ export class ConsultationsService {
     @InjectRepository(Department)
     private departmentsRepo: Repository<Department>,
 
-    @InjectRepository(InternalRemission)
-    private internalRemRepo: Repository<InternalRemission>,
+    @InjectRepository(Remission)
+    private RemRepo: Repository<Remission>,
 
     @InjectRepository(ExternalRemission)
     private externalRemRepo: Repository<ExternalRemission>,
   ) { }
 
   async createProgrammed(patientId: string, mainDoctorId: string, scheduledAt: Date, remissionId?: string, remissionType?: 'internal' | 'external') {
+   console.log(remissionId, remissionType);
     const patient = await this.patientsRepo.findOne({ where: { id: patientId } });
     if (!patient) throw new NotFoundException('Patient not found');
 
@@ -50,12 +51,12 @@ export class ConsultationsService {
 
     let internalRemission, externalRemission;
     if (remissionId) {
-      if (remissionType === 'internal') {
-        internalRemission = await this.internalRemRepo.findOne({ where: { id: remissionId } });
-      } else if (remissionType === 'external') {
-        externalRemission = await this.externalRemRepo.findOne({ where: { id: remissionId } });
-      }
+        internalRemission = await this.RemRepo.findOne({ where: { id: remissionId } });
     }
+    if (internalRemission.medicalPost){
+        externalRemission = internalRemission as ExternalRemission;
+        internalRemission = null;
+    } 
 
     const consultation = this.programmedRepo.create({
       mainDoctor: doctor,
@@ -131,5 +132,10 @@ export class ConsultationsService {
     if (diagnosis) consultation.diagnosis = diagnosis;
 
     return this.consultationsRepo.save(consultation);
+  }
+
+  async delete(id: string) {
+    const consultation = await this.findOne(id);
+    return this.consultationsRepo.remove(consultation); 
   }
 }

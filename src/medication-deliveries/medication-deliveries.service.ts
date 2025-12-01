@@ -1,99 +1,119 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+// medication-deliveries.service.ts
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { MedicationDelivery, DeliveryStatus } from './medication-delivery.entity';
 import { MedicationDeliveryItem } from '../medication-deliveries-items/medication-delivery-item.entity';
-import { Medication } from 'src/medications/medication.entity';
-import { Department } from 'src/departments/department.entity';
-import { Worker } from 'src/workers/worker.entity';
+import { Department } from '../departments/department.entity';
+import { Medication } from '../medications/medication.entity';
+import { Worker } from '../workers/worker.entity';
 
 @Injectable()
-export class MedicationDeliveryService {
+export class MedicationDeliveriesService {
   constructor(
     @InjectRepository(MedicationDelivery)
-    private deliveryRepo: Repository<MedicationDelivery>,
+    private deliveriesRepo: Repository<MedicationDelivery>,
 
     @InjectRepository(MedicationDeliveryItem)
     private itemsRepo: Repository<MedicationDeliveryItem>,
 
-    @InjectRepository(Medication)
-    private medicationsRepo: Repository<Medication>,
-
     @InjectRepository(Department)
     private departmentsRepo: Repository<Department>,
+
+    @InjectRepository(Medication)
+    private medicationsRepo: Repository<Medication>,
 
     @InjectRepository(Worker)
     private workersRepo: Repository<Worker>,
   ) {}
 
-  async create(
-    departmentId: string,
-    requestedById: string | undefined,
-    items: { medicationId: string; quantity: number }[],
-  ) {
-    // DEPARTMENT
-    const department = await this.departmentsRepo.findOne({ where: { id: departmentId } });
+  async create(body: {
+    departmentId: string;
+    items: { medicationId: string; quantity: number }[];
+  }) {
+    // Get department
+    const department = await this.departmentsRepo.findOne({
+      where: { id: body.departmentId },
+    });
     if (!department) throw new NotFoundException('Department not found');
 
-    // WORKER (opcional)
-    let requestedBy: Worker | undefined = undefined;
-    if (requestedById) {
-      const workerFound = await this.workersRepo.findOne({ where: { id: requestedById } });
-      if (!workerFound) throw new NotFoundException('Worker not found');
-      requestedBy = workerFound;
-    }
-
-    // CREAMOS EL DELIVERY
-    const delivery = this.deliveryRepo.create({
+    // Create delivery
+    const delivery = this.deliveriesRepo.create({
       department,
-      requestedBy,
       status: DeliveryStatus.PENDING,
-      items: [],
     });
+    const savedDelivery = await this.deliveriesRepo.save(delivery);
 
-    await this.deliveryRepo.save(delivery);
-
-    // CREAR ITEMS
-    for (const item of items) {
-      const medication = await this.medicationsRepo.findOne({ where: { id: item.medicationId } });
-      if (!medication) throw new NotFoundException(`Medication ${item.medicationId} not found`);
-
-      const deliveryItem = this.itemsRepo.create({
-        medication,
-        quantity: item.quantity,
-        medicationDelivery: delivery,
+    // Create items for this delivery
+    for (const itemData of body.items) {
+      const medication = await this.medicationsRepo.findOne({
+        where: { id: itemData.medicationId },
       });
+      if (!medication) {
+        throw new NotFoundException(
+          `Medication ${itemData.medicationId} not found`,
+        );
+      }
 
-      await this.itemsRepo.save(deliveryItem);
-      delivery.items.push(deliveryItem);
+      const item = this.itemsRepo.create({
+        medicationDelivery: savedDelivery,
+        medication,
+        quantity: itemData.quantity,
+      });
+      await this.itemsRepo.save(item);
     }
 
-    return delivery;
+    return this.findOne(savedDelivery.id);
   }
 
-  findAll() {
-    return this.deliveryRepo.find({
-      relations: ['items', 'items.medication', 'department', 'requestedBy'],
+  async findAll() {
+    return this.deliveriesRepo.find({
+      relations: [
+        'department',
+        'requestedBy',
+        'items',
+        'items.medication',
+      ],
+      order: { createdAt: 'DESC' },
     });
   }
 
   async findOne(id: string) {
-    const delivery = await this.deliveryRepo.findOne({
+    const delivery = await this.deliveriesRepo.findOne({
       where: { id },
-      relations: ['items', 'items.medication', 'department', 'requestedBy'],
+      relations: [
+        'department',
+        'requestedBy',
+        'items',
+        'items.medication',
+      ],
     });
-    if (!delivery) throw new NotFoundException('Medication delivery not found');
+    if (!delivery) throw new NotFoundException('Delivery not found');
     return delivery;
+  }
+
+  async findByDepartment(departmentId: string) {
+    return this.deliveriesRepo.find({
+      where: { department: { id: departmentId } },
+      relations: [
+        'department',
+        'requestedBy',
+        'items',
+        'items.medication',
+      ],
+      order: { createdAt: 'DESC' },
+    });
   }
 
   async updateStatus(id: string, status: DeliveryStatus) {
     const delivery = await this.findOne(id);
     delivery.status = status;
-    return this.deliveryRepo.save(delivery);
+    return this.deliveriesRepo.save(delivery);
   }
 
-  async remove(id: string) {
+  async delete(id: string) {
     const delivery = await this.findOne(id);
-    return this.deliveryRepo.remove(delivery);
+    await this.deliveriesRepo.remove(delivery);
+    return { message: 'Delivery deleted successfully' };
   }
 }

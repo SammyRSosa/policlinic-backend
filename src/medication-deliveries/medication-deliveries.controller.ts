@@ -1,30 +1,39 @@
-import { Controller, Get, Post, Param, Body, Patch, Delete } from '@nestjs/common';
-import { MedicationDeliveryService } from './medication-deliveries.service';
+// medication-deliveries.controller.ts
+import {
+  Controller,
+  Get,
+  Post,
+  Patch,
+  Delete,
+  Param,
+  Body,
+} from '@nestjs/common';
+import { MedicationDeliveriesService } from './medication-deliveries.service';
 import { DeliveryStatus } from './medication-delivery.entity';
 
 @Controller('medication-deliveries')
-export class MedicationDeliveryController {
-  constructor(private readonly service: MedicationDeliveryService) {}
+export class MedicationDeliveriesController {
+  constructor(private readonly service: MedicationDeliveriesService) {}
 
   @Post()
   create(
     @Body()
     body: {
       departmentId: string;
-      requestedById?: string;
       items: { medicationId: string; quantity: number }[];
     },
   ) {
-    return this.service.create(
-      body.departmentId,
-      body.requestedById,
-      body.items,
-    );
+    return this.service.create(body);
   }
 
   @Get()
   findAll() {
     return this.service.findAll();
+  }
+
+  @Get('department/:departmentId')
+  findByDepartment(@Param('departmentId') departmentId: string) {
+    return this.service.findByDepartment(departmentId);
   }
 
   @Get(':id')
@@ -33,12 +42,15 @@ export class MedicationDeliveryController {
   }
 
   @Patch(':id/status')
-  updateStatus(@Param('id') id: string, @Body() body: { status: DeliveryStatus }) {
+  updateStatus(
+    @Param('id') id: string,
+    @Body() body: { status: DeliveryStatus },
+  ) {
     return this.service.updateStatus(id, body.status);
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.service.remove(id);
+  delete(@Param('id') id: string) {
+    return this.service.delete(id);
   }
 }

@@ -1,4 +1,4 @@
-import { Controller, Post, Get, Param, Body, Patch, Req, UseGuards } from '@nestjs/common';
+import { Controller, Post, Get, Param, Body, Patch, Req, UseGuards, Delete } from '@nestjs/common';
 import { ConsultationsService } from './consultations.service';
 import { ConsultationStatus } from './consultation.entity';
 import { JwtAuthGuard } from 'src/auth/jwt.guard';
@@ -57,5 +57,10 @@ export class ConsultationsController {
   @Patch(':id/status')
   updateStatus(@Param('id') id: string, @Body() body: { status: ConsultationStatus; diagnosis?: string }) {
     return this.service.updateStatus(id, body.status, body.diagnosis);
+  }
+
+  @Delete(':id')
+  delete(@Param('id') id: string) {
+    return this.service.delete(id);
   }
 }

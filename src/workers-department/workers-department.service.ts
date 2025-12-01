@@ -17,19 +17,39 @@ export class WorkerDepartmentService {
   ) {}
 
   async assign(workerId: string, departmentId: string) {
-    const worker = await this.workersRepo.findOne({ where: { id: workerId } });
-    if (!worker) throw new NotFoundException('Worker not found');
+  const worker = await this.workersRepo.findOne({
+    where: { id: workerId },
+    relations: ['department'],
+  });
+  if (!worker) throw new NotFoundException('Worker not found');
 
-    const department = await this.departmentsRepo.findOne({ where: { id: departmentId } });
-    if (!department) throw new NotFoundException('Department not found');
+  const department = await this.departmentsRepo.findOne({
+    where: { id: departmentId },
+    relations: ['workers'],
+  });
+  if (!department) throw new NotFoundException('Department not found');
 
-    // deactivate previous assignments
-    await this.wdRepo.update({ worker: { id: workerId }, active: true }, { active: false, leftAt: new Date() });
+  // Deactivate previous assignments
+  await this.wdRepo.update(
+    { worker: { id: workerId }, active: true },
+    { active: false, leftAt: new Date() },
+  );
 
-    const assignment = this.wdRepo.create({ worker, department, active: true });
-    return this.wdRepo.save(assignment);
-  }
+  // Create new assignment
+  const assignment = new WorkerDepartment();
+  assignment.worker = worker;
+  assignment.department = department;
+  assignment.active = true;
+  
+  await this.wdRepo.save(assignment);
 
+  // Update worker's current department
+  worker.department = department;
+  await this.workersRepo.save(worker);
+
+  return assignment;
+}
+  
   findAll() {
     return this.wdRepo.find({ relations: ['worker', 'department'] });
   }
