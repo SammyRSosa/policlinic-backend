@@ -1,13 +1,11 @@
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne } from 'typeorm';
-import { Stock } from '../stocks/stock.entity';
+import { Department } from '../departments/department.entity';
+import { Medication } from '../medications/medication.entity';
 
 @Entity('stock_items')
 export class StockItem {
   @PrimaryGeneratedColumn('uuid')
   id: string;
-
-  @Column()
-  medicationName: string;
 
   @Column('int', { default: 0 })
   quantity: number;
@@ -18,6 +16,15 @@ export class StockItem {
   @Column('int', { default: 1000 })
   maxThreshold: number;
 
-  @ManyToOne(() => Stock, (stock) => stock.items, { nullable: false, onDelete: 'CASCADE' })
-  stock: Stock;
+  @ManyToOne(() => Medication, (medication) => medication.stockItems, {
+    nullable: false,
+    eager: true // Para cargar automáticamente la medicación
+  })
+  medication: Medication;
+
+  @ManyToOne(() => Department, (department) => department.stockItems, {
+    nullable: false,
+    onDelete: 'CASCADE'
+  })
+  department: Department;
 }

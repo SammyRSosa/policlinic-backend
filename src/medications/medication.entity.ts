@@ -1,6 +1,6 @@
 import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm';
 import { ConsultationPrescription } from '../consultations-prescriptions/consultations-prescription.entity';
-import { Stock } from '../stocks/stock.entity';
+import { StockItem } from '../stock-items/stock-item.entity';
 
 @Entity('medications')
 export class Medication {
@@ -22,6 +22,6 @@ export class Medication {
   @OneToMany(() => ConsultationPrescription, (prescription) => prescription.medication)
   prescriptions: ConsultationPrescription[];
 
-  @OneToMany(() => Stock, (stock) => stock.medication)
-  stocks: Stock[];
+  @OneToMany(() => StockItem, (stockItem) => stockItem.medication)
+  stockItems: StockItem[];
 }

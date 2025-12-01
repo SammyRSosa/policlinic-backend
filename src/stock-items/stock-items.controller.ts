@@ -5,12 +5,13 @@ import { StockItemsService } from './stocks-items.service';
 export class StockItemsController {
   constructor(private readonly stockItemsService: StockItemsService) {}
 
-  @Post('create/:stockId')
+  // ✅ CAMBIAR: Recibir medicationId en el body
+  @Post('create/:departmentId')
   create(
-    @Param('stockId') stockId: string,
-    @Body() body: { medicationName: string; quantity?: number },
+    @Param('departmentId') departmentId: string,
+    @Body() body: { medicationId: string; quantity?: number }, // ✅ Cambiar a medicationId
   ) {
-    return this.stockItemsService.create(stockId, body.medicationName, body.quantity);
+    return this.stockItemsService.create(departmentId, body.medicationId, body.quantity);
   }
 
   @Get()
@@ -18,8 +19,23 @@ export class StockItemsController {
     return this.stockItemsService.findAll();
   }
 
-  @Get('stock/:stockId')
-  findByStock(@Param('stockId') stockId: string) {
-    return this.stockItemsService.findByStock(stockId);
+  @Get('department/:departmentId')
+  findByDepartment(@Param('departmentId') departmentId: string) {
+    return this.stockItemsService.findByDepartment(departmentId);
+  }
+
+  // ✅ NUEVO: Endpoint para buscar por medicamento
+  @Get('medication/:medicationId')
+  findByMedication(@Param('medicationId') medicationId: string) {
+    return this.stockItemsService.findByMedication(medicationId);
+  }
+
+  // ✅ NUEVO: Endpoint para buscar por departamento y medicamento
+  @Get('department/:departmentId/medication/:medicationId')
+  findByDepartmentAndMedication(
+    @Param('departmentId') departmentId: string,
+    @Param('medicationId') medicationId: string,
+  ) {
+    return this.stockItemsService.findByDepartmentAndMedication(departmentId, medicationId);
   }
 }

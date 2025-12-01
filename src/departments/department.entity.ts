@@ -7,11 +7,12 @@ import {
   JoinColumn,
 } from 'typeorm';
 import { Worker } from '../workers/worker.entity';
-import { Stock } from '../stocks/stock.entity';
 import { Consultation, ProgrammedConsultation } from '../consultations/consultation.entity';
 import { ExternalRemission, InternalRemission, Remission } from '../remissions/remission.entity';
 import { HeadOfDepartment } from '../heads-of-departments/head-of-department.entity';
 import { WorkerDepartment } from '../workers-department/worker-department.entity';
+import { StockItem } from '../stock-items/stock-item.entity';
+
 
 @Entity('departments')
 export class Department {
@@ -27,9 +28,9 @@ export class Department {
   })
   @JoinColumn()
   headOfDepartment: HeadOfDepartment;
-
-  @OneToMany(() => Stock, (stock) => stock.department)
-  stocks: Stock[];
+  
+  @OneToMany(() => StockItem, (stockItem) => stockItem.department)
+  stockItems: StockItem[];
 
   @OneToMany(() => Worker, (worker) => worker.department)
   workers: Worker[];
