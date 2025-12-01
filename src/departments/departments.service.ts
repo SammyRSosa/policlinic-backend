@@ -2,7 +2,6 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Department } from './department.entity';
-import { Stock } from 'src/stocks/stock.entity';
 import { HeadOfDepartment } from 'src/heads-of-departments/head-of-department.entity';
 import { Worker, WorkerRole } from 'src/workers/worker.entity';
 
@@ -11,9 +10,6 @@ export class DepartmentsService {
   constructor(
     @InjectRepository(Department)
     private departmentsRepo: Repository<Department>,
-
-    @InjectRepository(Stock)
-    private stocksRepo: Repository<Stock>,
 
     @InjectRepository(HeadOfDepartment)
     private headsRepo: Repository<HeadOfDepartment>,
@@ -56,18 +52,9 @@ export class DepartmentsService {
     });
     await this.departmentsRepo.save(department);
 
-    // 4. Create a stock for this department
-    const stock = this.stocksRepo.create({
-      department, // associate stock with this department
-    });
-    await this.stocksRepo.save(stock);
-
     // 5. Assign the department to the head
     head.department = department;
     await this.headsRepo.save(head);
-
-    // 6. Attach stock to department (optional if you want the relation loaded)
-    department.stocks = [stock];
 
     return department;
   }

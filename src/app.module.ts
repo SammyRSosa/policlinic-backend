@@ -8,7 +8,6 @@ import { DepartmentsModule } from './departments/departments.module';
 import { DepartmentStocksModule } from './department-stocks/department-stocks.module';
 import { RemissionsModule } from './remissions/remissions.module';
 import { ConsultationsModule } from './consultations/consultations.module';
-import { StockRequestsModule } from './stock-requests/stock-requests.module';
 import { WorkersModule } from './workers/workers.module';
 import { PatientsModule } from './patients/patients.module';
 import { WorkerDepartmentModule } from './workers-department/workers-department.module';
@@ -17,7 +16,7 @@ import { MedicationOrdersModule } from './medication-orders/medication-orders.mo
 import { MedicationDeliveryModule } from './medication-deliveries/medication-deliveries.module';
 import { ClinicHistoryModule } from './clinic-histories/clinic-histories.module';
 import { HeadsOfDepartmentsModule } from './heads-of-departments/heads-of-departments.module';
-import { StocksModule } from './stocks/stocks.module';
+
 import { StockItemsModule } from './stock-items/stock-items.module';
 import { StockItemsService } from './stock-items/stocks-items.service';
 import { MedicationOrderItemsModule } from './medication-order-items/medication-order-items.module';
@@ -45,7 +44,6 @@ import { AuthModule } from './auth/auth.module';
     DepartmentStocksModule,
     RemissionsModule,
     ConsultationsModule,
-    StockRequestsModule,
     WorkersModule,
     PatientsModule,
     WorkerDepartmentModule,
@@ -54,7 +52,6 @@ import { AuthModule } from './auth/auth.module';
     MedicationDeliveryModule,
     ClinicHistoryModule,
     HeadsOfDepartmentsModule,
-    StocksModule,
     StockItemsModule,
     MedicationOrderItemsModule,
     AuthModule,
