@@ -7,6 +7,7 @@ import { Department } from 'src/departments/department.entity';
 import { InternalRemission, ExternalRemission, Remission } from 'src/remissions/remission.entity';
 import { ConsultationsService } from './consultations.service';
 import { ConsultationsController } from './consultations.controller';
+import { ClinicHistory } from 'src/clinic-histories/clinic-history.entity';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { ConsultationsController } from './consultations.controller';
       InternalRemission,
       ExternalRemission,
       Remission,
+      ClinicHistory,
     ]),
   ],
   providers: [ConsultationsService],

@@ -9,6 +9,7 @@ import {
 } from 'typeorm';
 import { Patient } from '../patients/patient.entity';
 import { Consultation } from '../consultations/consultation.entity';
+import { Exclude } from 'class-transformer';
 
 @Entity('clinic_histories')
 export class ClinicHistory {
@@ -20,6 +21,7 @@ export class ClinicHistory {
   patient: Patient;
 
   @OneToMany(() => Consultation, (consultation) => consultation.clinicHistory, { cascade: true })
+  @Exclude()
   consultations: Consultation[];
 
   @Column({ type: 'text', nullable: true })
