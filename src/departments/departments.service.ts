@@ -173,4 +173,27 @@ export class DepartmentsService implements OnApplicationBootstrap {
     await this.departmentsRepo.remove(department);
     return { message: 'Department removed successfully' };
   }
+
+  async onApplicationBootstrap() {
+  console.log("🔧 Inicializando departamentos por defecto...");
+
+  const defaultDepartments = ["Droguería", "Almacén"];
+
+  for (const name of defaultDepartments) {
+    const exists = await this.departmentsRepo.findOne({ where: { name } });
+
+    if (!exists) {
+      console.log(`➡️ Creando departamento inicial: ${name}`);
+
+      const department = this.departmentsRepo.create({ name });
+      await this.departmentsRepo.save(department);
+    } else {
+      console.log(`✔️ Departamento '${name}' ya existe, no se crea de nuevo.`);
+    }
+  }
+
+  console.log("✅ Departamentos iniciales listos.");
+}
+
+
 }
