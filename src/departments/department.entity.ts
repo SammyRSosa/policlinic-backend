@@ -19,7 +19,7 @@ export class Department {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column()
+  @Column({ unique: true })
   name: string;
 
   @OneToOne(() => HeadOfDepartment, (head) => head.department, {
@@ -27,7 +27,7 @@ export class Department {
     eager: true,
   })
   @JoinColumn()
-  headOfDepartment: HeadOfDepartment;
+  headOfDepartment: HeadOfDepartment | null;
   
   @OneToMany(() => StockItem, (stockItem) => stockItem.department)
   stockItems: StockItem[];

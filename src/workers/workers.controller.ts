@@ -32,9 +32,10 @@ export class WorkersController {
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.service.remove(id);
+  softDelete(@Param('id') id: string) {
+    return this.service.softDeleteWorker(id);
   }
+
 
   @Get('department/:departmentId')
   getByDepartment(

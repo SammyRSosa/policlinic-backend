@@ -3,16 +3,22 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Worker, WorkerRole } from './worker.entity';
 import { Department } from '../departments/department.entity';
+import { WorkerDepartment } from '../workers-department/worker-department.entity';
+import { HeadOfDepartment } from '../heads-of-departments/head-of-department.entity';
 import { User, UserRole } from '../users/user.entity';
 import { CreateWorkerDto } from './dto/create-worker.dto';
 import { UpdateWorkerDto } from './dto/update-worker.dto';
+import { IsNull } from 'typeorm';
 
 @Injectable()
 export class WorkersService {
   constructor(
     @InjectRepository(Worker) private workersRepo: Repository<Worker>,
     @InjectRepository(Department) private departmentsRepo: Repository<Department>,
-  ) {}
+    @InjectRepository(WorkerDepartment) private wdRepo: Repository<WorkerDepartment>,
+    @InjectRepository(HeadOfDepartment) private headsRepo: Repository<HeadOfDepartment>,
+
+  ) { }
 
   private generateWorkerCode(firstName: string, lastName: string) {
     const randomDigits = Math.floor(1000 + Math.random() * 9000); // 4 digits
@@ -43,6 +49,14 @@ export class WorkersService {
         throw new NotFoundException('Department not found');
     }
 
+
+    if (dto.role === WorkerRole.HEAD_OF_DEPARTMENT && department?.headOfDepartment) {
+      throw new ForbiddenException(
+        'This department already has a head assigned'
+      );
+    }
+
+
     const workerData: Partial<Worker> = {
       firstName: dto.firstName,
       lastName: dto.lastName,
@@ -51,27 +65,73 @@ export class WorkersService {
       code: this.generateWorkerCode(dto.firstName, dto.lastName),
     };
 
-    const worker = this.workersRepo.create(workerData);
-    return this.workersRepo.save(worker);
+    // Usar transacción para crear worker y registros relacionados
+    return await this.workersRepo.manager.transaction(async (manager) => {
+      const workerRepo = manager.getRepository(Worker);
+      const wdRepo = manager.getRepository(WorkerDepartment);
+      const headsRepo = manager.getRepository(HeadOfDepartment);
+      const departmentsRepo = manager.getRepository(Department);
+
+      const worker = workerRepo.create(workerData);
+      await workerRepo.save(worker);
+
+      // Si hay department asignado, crear historial (WorkerDepartment)
+      if (department) {
+        const workerDept = wdRepo.create({
+          worker,
+          department,
+          active: true,
+        });
+        await wdRepo.save(workerDept);
+      }
+
+      // Si es HEAD_OF_DEPARTMENT: crear HeadOfDepartment y actualizar department.headOfDepartment
+      if (dto.role === WorkerRole.HEAD_OF_DEPARTMENT && department) {
+        // (Opcional) finalizar head anterior si existe
+        // Crear nuevo HeadOfDepartment
+        const head = headsRepo.create({
+          worker,
+          department,
+          assignedAt: new Date(),
+        });
+        await headsRepo.save(head);
+
+        // Actualizar department.headOfDepartment (si quieres guardarlo en la entidad)
+        const deptToUpdate = await departmentsRepo.findOne({
+          where: { id: department.id },
+          relations: ['headOfDepartment'],
+        });
+
+        if (deptToUpdate) {
+          deptToUpdate.headOfDepartment = head;
+          await departmentsRepo.save(deptToUpdate);
+        }
+
+      }
+
+      return worker;
+    });
   }
 
-  findAll() {
-    return this.workersRepo.find({ relations: ['department'] });
+  // Modificar findAll para traer solo activos
+  async findAll() {
+    return this.workersRepo.find({
+      where: { active: true },
+      relations: ['department'],
+    });
   }
 
 
+  // findByUserId: si quieres, podemos validar que el worker esté activo
   async findByUserId(userId: string) {
-  const worker = await this.workersRepo.findOne({
-    where: { user: { id: userId } },
-    relations: ['department', 'user']
-  });
-  
-  if (!worker) {
-    throw new NotFoundException('Worker not found for this user');
+    const worker = await this.workersRepo.findOne({
+      where: { user: { id: userId }, active: true },
+      relations: ['department', 'user'],
+    });
+
+    if (!worker) throw new NotFoundException('Worker not found or inactive');
+    return worker;
   }
-  
-  return worker;
-}
 
   async updateWorker(
     id: string,
@@ -93,20 +153,68 @@ export class WorkersService {
     return this.workersRepo.save(worker)
   }
 
-  async remove(id: string) {
-    const worker = await this.workersRepo.findOne({ where: { id } });
-    if (!worker) throw new NotFoundException('User not found');
-    return this.workersRepo.remove(worker);
-  }
-
-  async getWorkersByDepartment(departmentId: string) {
-  const workers = await this.workersRepo.find({
-    where: { department: { id: departmentId } },
-    relations: ['department'],
-    order: { firstName: 'ASC' },
+  // Método para soft delete
+async softDeleteWorker(id: string) {
+  const worker = await this.workersRepo.findOne({
+    where: { id },
+    relations: ['headOfDepartment', 'departmentHistory'],
   });
 
-  return workers;
+  if (!worker) throw new NotFoundException('Worker not found');
+
+  // 1. Soft delete del worker
+  worker.active = false;
+  await this.workersRepo.save(worker);
+
+  // 2. Si es jefe de departamento, actualizar HeadOfDepartment y Department
+  const headRecord = await this.headsRepo.findOne({
+    where: {
+      worker: { id: worker.id },
+      endedAt: IsNull(),
+    },
+    relations: ['department'],
+  });
+
+  if (headRecord) {
+    // Fecha de fin del jefe
+    headRecord.endedAt = new Date();
+    await this.headsRepo.save(headRecord);
+
+    // Quitar referencia en Department
+    if (headRecord.department) {
+      headRecord.department.headOfDepartment = null;
+      await this.departmentsRepo.save(headRecord.department);
+    }
+  }
+
+  // 3. Marcar como inactivo en WorkerDepartment
+  const activeDeptRecords = await this.wdRepo.find({
+    where: { worker: { id: worker.id }, active: true },
+    relations: ['department'],
+  });
+
+  for (const wd of activeDeptRecords) {
+    wd.active = false;
+    wd.leftAt = new Date();
+    await this.wdRepo.save(wd);
+  }
+
+  return worker;
 }
+
+
+
+  async getWorkersByDepartment(departmentId: string) {
+    const workers = await this.workersRepo.find({
+      where: {
+        department: { id: departmentId },
+        active: true,
+      },
+      relations: ['department'],
+      order: { firstName: 'ASC' },
+    });
+
+    return workers;
+  }
 }
 

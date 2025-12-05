@@ -94,6 +94,14 @@ export class DepartmentsService implements OnApplicationBootstrap {
 
     return department;
   }
+  
+async searchByName(q: string) {
+  return this.departmentsRepo
+    .createQueryBuilder('d')
+    .where('LOWER(d.name) LIKE :q', { q: `%${q.toLowerCase()}%` })
+    .getMany();
+}
+
 
   async findAll() {
     return this.departmentsRepo.find({

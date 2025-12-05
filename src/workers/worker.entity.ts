@@ -40,7 +40,7 @@ export class Worker {
   role: WorkerRole;
 
   @Column({ default: true })
-  active: boolean;
+  active: boolean; 
 
   @ManyToOne(() => Department, (department) => department.workers, { nullable: true })
   department?: Department;
