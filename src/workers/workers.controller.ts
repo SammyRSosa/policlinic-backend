@@ -32,14 +32,21 @@ export class WorkersController {
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.service.remove(id);
+  softDelete(@Param('id') id: string) {
+    return this.service.softDeleteWorker(id);
   }
+
 
   @Get('department/:departmentId')
   getByDepartment(
     @Param('departmentId') departmentId: string,
   ) {
     return this.service.getWorkersByDepartment(departmentId);
+  }
+
+  @Get('by-user')
+  @UseGuards(JwtAuthGuard)
+  findByUser(@Req() req) {
+    return this.service.findByUserId(req.user.id);
   }
 }

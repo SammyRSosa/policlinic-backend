@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, OnApplicationBootstrap } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Department } from './department.entity';
@@ -8,7 +8,7 @@ import { WorkerDepartment } from 'src/workers-department/worker-department.entit
 import { User } from 'src/users/user.entity';
 
 @Injectable()
-export class DepartmentsService {
+export class DepartmentsService implements OnApplicationBootstrap {
   constructor(
     @InjectRepository(Department)
     private departmentsRepo: Repository<Department>,
@@ -94,6 +94,14 @@ export class DepartmentsService {
 
     return department;
   }
+  
+async searchByName(q: string) {
+  return this.departmentsRepo
+    .createQueryBuilder('d')
+    .where('LOWER(d.name) LIKE :q', { q: `%${q.toLowerCase()}%` })
+    .getMany();
+}
+
 
   async findAll() {
     return this.departmentsRepo.find({
@@ -173,4 +181,27 @@ export class DepartmentsService {
     await this.departmentsRepo.remove(department);
     return { message: 'Department removed successfully' };
   }
+
+  async onApplicationBootstrap() {
+  console.log("🔧 Inicializando departamentos por defecto...");
+
+  const defaultDepartments = ["Droguería", "Almacén"];
+
+  for (const name of defaultDepartments) {
+    const exists = await this.departmentsRepo.findOne({ where: { name } });
+
+    if (!exists) {
+      console.log(`➡️ Creando departamento inicial: ${name}`);
+
+      const department = this.departmentsRepo.create({ name });
+      await this.departmentsRepo.save(department);
+    } else {
+      console.log(`✔️ Departamento '${name}' ya existe, no se crea de nuevo.`);
+    }
+  }
+
+  console.log("✅ Departamentos iniciales listos.");
+}
+
+
 }
