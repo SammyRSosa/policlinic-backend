@@ -67,11 +67,11 @@ export class ProgrammedConsultation extends Consultation {
   scheduledAt: Date;
 
 
-  @OneToOne(() => InternalRemission, { nullable: true })
+  @OneToOne(() => InternalRemission, { nullable: true ,onDelete:'CASCADE'})
   @JoinColumn()
   internalRemission?: InternalRemission;
 
-  @OneToOne(() => ExternalRemission, { nullable: true })
+  @OneToOne(() => ExternalRemission, { nullable: true ,onDelete:'CASCADE'})
   @JoinColumn()
   externalRemission?: ExternalRemission;
 

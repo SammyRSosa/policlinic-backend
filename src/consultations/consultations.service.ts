@@ -86,6 +86,14 @@ export class ConsultationsService {
       externalRemission,
     });
 
+    if (internalRemission){
+      internalRemission.consultation = consultation;
+      await this.RemRepo.save(internalRemission);}
+    else{
+      externalRemission.consultation = consultation;
+      await this.RemRepo.save(externalRemission);}
+
+
     const saved = await this.programmedRepo.save(consultation);
 
     await this.attachConsultationToPatientHistory(patientId, saved);
@@ -156,23 +164,24 @@ export class ConsultationsService {
   //  BY DOCTOR / WORKER
   // -------------------------------------------------------
   async findByWorker(workerId: string) {
-    const data = await this.consultationsRepo.find({
-      where: { mainDoctor: { id: workerId } },
-      relations: [
-        'department',
-        'clinicHistory',
-        'prescriptions',
-        'patient',
-        'mainDoctor',
-        'department',
-        'internalRemission',
-        'externalRemission',
-      ],
-      order: { createdAt: 'DESC' },
-    });
+  const data = await this.consultationsRepo
+    .createQueryBuilder('consultation')
+    .leftJoinAndSelect('consultation.department', 'department')
+    .leftJoinAndSelect('consultation.clinicHistory', 'clinicHistory')
+    .leftJoinAndSelect('consultation.prescriptions', 'prescriptions')
+    .leftJoinAndSelect('prescriptions.medication', 'medication')
+    .leftJoinAndSelect('consultation.patient', 'patient')
+    .leftJoinAndSelect('consultation.mainDoctor', 'mainDoctor')
+    .leftJoinAndSelect('consultation.internalRemission', 'internalRemission')
+    .leftJoinAndSelect('internalRemission.patient', 'internalRemissionPatient')
+    .leftJoinAndSelect('consultation.externalRemission', 'externalRemission')
+    .leftJoinAndSelect('externalRemission.patient', 'externalRemissionPatient')
+    .where('consultation.mainDoctorId = :workerId', { workerId })
+    .orderBy('consultation.createdAt', 'DESC')
+    .getMany();
 
-    return instanceToPlain(data);
-  }
+  return data;
+}
 
    async findByNurse(nurseId: string) {
     const nurse = await this.workersRepo.findOne({

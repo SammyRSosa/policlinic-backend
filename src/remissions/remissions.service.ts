@@ -82,7 +82,7 @@ export class RemissionsService {
 
   async findAll() {
     return this.remissionsRepo.find({
-      relations: ['patient', 'toDepartment', 'consultation'],
+      relations: ['patient', 'toDepartment', 'consultation','medicalPost','fromDepartment'],
     });
   }
 

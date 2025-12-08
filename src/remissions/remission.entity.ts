@@ -34,7 +34,7 @@ export abstract class Remission {
   @CreateDateColumn()
   date: Date;
 
-  @OneToOne(() => Consultation, { nullable: true, cascade: true,onDelete: 'CASCADE'})
+  @OneToOne(() => Consultation, { nullable: true, cascade: true,onDelete:'CASCADE' })
   @JoinColumn()
   consultation?: Consultation;
 }
