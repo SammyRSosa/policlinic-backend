@@ -31,6 +31,14 @@ export class ConsultationsController {
     return this.service.findAll();
   }
 
+  @Get('by-nurse')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.DOCTOR, UserRole.NURSE)
+  findByNurse(@Req() req) {
+    console.log(req.user);
+    return this.service.findByNurse(req.user.entityId);
+  }
+
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.service.findOne(id);
@@ -45,6 +53,7 @@ export class ConsultationsController {
   findByWorker(@Param('workerId') workerId: string) {
     return this.service.findByWorker(workerId);
   }
+
 
   // 👨‍⚕️ Get my consultations (doctor-specific)
   @Get('my-consultations/own')

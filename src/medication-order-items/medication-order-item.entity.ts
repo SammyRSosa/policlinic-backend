@@ -1,19 +1,25 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, Unique} from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne } from 'typeorm';
 import { MedicationOrder } from 'src/medication-orders/medication-order.entity';
-import { StockItem } from 'src/stock-items/stock-item.entity';
+import { Medication } from 'src/medications/medication.entity';
 
 @Entity('medication_order_items')
-@Unique([ 'medicationOrder', 'stockItem'])
 export class MedicationOrderItem {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @ManyToOne(() => MedicationOrder, (order) => order.items, { nullable: false })
-  medicationOrder: MedicationOrder;
+  @ManyToOne(() => MedicationOrder, (order) => order.items, {
+    nullable: false,
+    onDelete: 'CASCADE',
+    eager: false,
+  })
+  medicationOrder!: MedicationOrder;
 
-  @ManyToOne(() => StockItem, { nullable: false })
-  stockItem: StockItem;
+  @ManyToOne(() => Medication, {
+    nullable: false,
+    eager: false,
+  })
+  medication!: Medication;
 
-  @Column('int')
-  quantity: number;
+  @Column('int', { default: 0 })
+  quantity: number = 0;
 }

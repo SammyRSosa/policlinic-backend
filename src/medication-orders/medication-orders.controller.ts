@@ -6,7 +6,14 @@ export class MedicationOrdersController {
   constructor(private readonly ordersService: MedicationOrdersService) {}
 
   @Post()
-  create(@Body() body: { departmentId: string; headId: string; items: { stockItemId: string; quantity: number }[] }) {
+  create(
+    @Body()
+    body: {
+      departmentId: string;
+      headId: string;
+      items: { medicationId: string; quantity: number }[];
+    },
+  ) {
     return this.ordersService.create(body.departmentId, body.headId, body.items);
   }
 

@@ -26,6 +26,7 @@ import { SeedModule } from './seed/seed.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthModule } from './auth/auth.module';
 import { MedicationDelivery } from './medication-deliveries/medication-delivery.entity';
+import { MedicationDeliveryItemsModule } from './medication-deliveries-items/medication-delivery-items.module';
 
 @Module({
   imports: [
@@ -51,6 +52,8 @@ import { MedicationDelivery } from './medication-deliveries/medication-delivery.
     ConsultationPrescriptionsModule,
     MedicationOrdersModule,
     MedicationDeliveriesModule,
+    MedicationOrderItemsModule,
+    MedicationDeliveryItemsModule,
     ClinicHistoryModule,
     HeadsOfDepartmentsModule,
     StockItemsModule,
@@ -58,6 +61,7 @@ import { MedicationDelivery } from './medication-deliveries/medication-delivery.
     AuthModule,
     MedicalPostsModule,
     SeedModule,
+    MedicationDelivery,
   ],
   controllers: [AppController],
   providers: [AppService],

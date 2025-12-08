@@ -3,7 +3,7 @@ import { MedicationDeliveryItemsService } from './medication-delivery-items.serv
 
 @Controller('medication-delivery-items')
 export class MedicationDeliveryItemsController {
-  constructor(private readonly service: MedicationDeliveryItemsService) {}
+  constructor(private readonly service: MedicationDeliveryItemsService) { }
 
   @Post()
   create(

@@ -1,15 +1,19 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { MedicationOrderItem } from './medication-order-item.entity';
-import { MedicationOrder } from 'src/medication-orders/medication-order.entity';
-import { StockItem } from 'src/stock-items/stock-item.entity';
 import { MedicationOrderItemsService } from './medication-order-items.service';
-import { MedicationOrderItemsController } from './medication-order-items.controller';
+import { MedicationOrderItem } from './medication-order-item.entity';
+import { MedicationOrder } from '../medication-orders/medication-order.entity';
+import { Medication } from '../medications/medication.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([MedicationOrderItem, MedicationOrder, StockItem])],
+  imports: [
+    TypeOrmModule.forFeature([
+      MedicationOrderItem,
+      MedicationOrder,
+      Medication,
+    ]),
+  ],
   providers: [MedicationOrderItemsService],
-  controllers: [MedicationOrderItemsController],
   exports: [MedicationOrderItemsService],
 })
 export class MedicationOrderItemsModule {}

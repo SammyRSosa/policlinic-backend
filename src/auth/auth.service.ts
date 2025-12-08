@@ -44,6 +44,9 @@ export class AuthService {
         case 'doctor':
           role = UserRole.DOCTOR;
           break;
+        case 'nurse':
+          role = UserRole.NURSE;
+          break;  
         default:
           role = UserRole.DOCTOR; // fallback
       }

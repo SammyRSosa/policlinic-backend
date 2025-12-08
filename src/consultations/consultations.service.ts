@@ -174,6 +174,34 @@ export class ConsultationsService {
     return instanceToPlain(data);
   }
 
+   async findByNurse(nurseId: string) {
+    const nurse = await this.workersRepo.findOne({
+      where: { id: nurseId },
+      relations: ['department'],
+    });
+    if (!nurse) throw new NotFoundException('Nurse not found');
+    if (!nurse.department) throw new NotFoundException('Nurse has no assigned department');
+
+    const departmentId = nurse.department.id;
+
+    const data = await this.consultationsRepo.find({
+      where: { department: { id: departmentId } },
+      relations: [
+        'department',
+        'clinicHistory',
+        'prescriptions',
+        'patient',
+        'mainDoctor',
+        'department',
+        'internalRemission',
+        'externalRemission',
+      ],
+      order: { createdAt: 'DESC' },
+    });
+
+    return instanceToPlain(data);
+  }
+
   // -------------------------------------------------------
   //  FIND ONE
   // -------------------------------------------------------

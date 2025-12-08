@@ -13,6 +13,7 @@ export enum UserRole {
   HEAD_OF_DEPARTMENT = 'head_of_department',
   DOCTOR = 'doctor',
   PATIENT = 'patient',
+  NURSE = 'nurse',
 }
 
 @Entity('users')
