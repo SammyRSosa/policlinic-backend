@@ -251,6 +251,23 @@ export class ConsultationsService {
 
     return instanceToPlain(removed);
   }
+  // ConsultationsService
+async findAllForDoctor() {
+  const data = await this.consultationsRepo
+    .createQueryBuilder('consultation')
+    .leftJoinAndSelect('consultation.department', 'department')
+    .leftJoinAndSelect('consultation.clinicHistory', 'clinicHistory')
+    .leftJoinAndSelect('consultation.prescriptions', 'prescriptions')
+    .leftJoinAndSelect('prescriptions.medication', 'medication')
+    .leftJoinAndSelect('consultation.patient', 'patient')
+    .leftJoinAndSelect('consultation.mainDoctor', 'mainDoctor')
+    .leftJoinAndSelect('consultation.internalRemission', 'internalRemission')
+    .leftJoinAndSelect('consultation.externalRemission', 'externalRemission')
+    .orderBy('consultation.createdAt', 'DESC')
+    .getMany();
+
+  return instanceToPlain(data);
+}
 
   // -------------------------------------------------------
   //  ATTACH CONSULTATION TO CLINIC HISTORY
