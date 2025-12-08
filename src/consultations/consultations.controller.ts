@@ -30,6 +30,13 @@ export class ConsultationsController {
   findAll() {
     return this.service.findAll();
   }
+// ConsultationsController
+@Get('all-for-doctor')
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Roles(UserRole.DOCTOR)
+async getAllForDoctor() {
+  return this.service.findAllForDoctor();
+}
 
   @Get('by-nurse')
   @UseGuards(JwtAuthGuard, RolesGuard)
