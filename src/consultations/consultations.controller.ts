@@ -43,7 +43,7 @@ export class ConsultationsController {
   findOne(@Param('id') id: string) {
     return this.service.findOne(id);
   }
-
+  
   @Get('by-department/:departmentId')
   findByDepartment(@Param('departmentId') departmentId: string) {
     return this.service.findByDepartment(departmentId);
