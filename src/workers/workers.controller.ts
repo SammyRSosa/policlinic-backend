@@ -22,7 +22,6 @@ export class WorkersController {
   @Get()
   @UseGuards(JwtAuthGuard) // optional: if everyone must be logged in
   findAll(@Req() req) {
-    console.log('User requesting all workers:', req.user);
     return this.service.findAll();
   }
 
