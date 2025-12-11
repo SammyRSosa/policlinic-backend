@@ -36,7 +36,7 @@ export class MedicationOrdersService {
 
     @InjectRepository(MedicationDeliveryItem)
     private deliveryItemsRepo: Repository<MedicationDeliveryItem>,
-  ) {}
+  ) { }
 
   async create(
     departmentId: string,
@@ -63,7 +63,7 @@ export class MedicationOrdersService {
 
     // Verify all medications exist and cache them
     const medicationsMap = new Map<string, Medication>();
-    
+
     for (const item of requestedItems) {
       if (!item.medicationId || item.quantity <= 0) {
         throw new BadRequestException(
@@ -74,7 +74,7 @@ export class MedicationOrdersService {
       const medication = await this.medicationsRepo.findOne({
         where: { id: item.medicationId },
       });
-      
+
       if (!medication) {
         throw new NotFoundException(
           `Medication ${item.medicationId} not found`,
@@ -95,7 +95,7 @@ export class MedicationOrdersService {
     // Create order items
     for (const itemData of requestedItems) {
       const medication = medicationsMap.get(itemData.medicationId);
-      
+
       if (!medication) {
         throw new NotFoundException(
           `Medication ${itemData.medicationId} not found`,
@@ -129,90 +129,74 @@ export class MedicationOrdersService {
     return order;
   }
 
-  async respond(orderId: string, accept: boolean) {
-    const order = await this.findOne(orderId);
+  async respond(orderId: string, accept: boolean, comment?: string) {
+  const order = await this.findOne(orderId);
 
-    order.status = accept
-      ? MedicationOrderStatus.ACCEPTED
-      : MedicationOrderStatus.DENIED;
-    order.respondedAt = new Date();
+  order.status = accept
+    ? MedicationOrderStatus.ACCEPTED
+    : MedicationOrderStatus.DENIED;
+  order.respondedAt = new Date();
+  
+  // Add comment if provided (typically for rejections)
+  if (comment) {
+    order.comment = comment;
+  }
 
-    if (accept) {
-      // Create medication delivery
-      const delivery = this.deliveriesRepo.create({
-        department: order.department,
-        status: DeliveryStatus.PENDING,
-      });
-      const savedDelivery = await this.deliveriesRepo.save(delivery);
+  if (accept) {
+    // Create medication delivery
+    const delivery = this.deliveriesRepo.create({
+      department: order.department,
+      status: DeliveryStatus.PENDING,
+    });
+    const savedDelivery = await this.deliveriesRepo.save(delivery);
 
-      // Get Almacén department
-      const almacenDept = await this.departmentsRepo.findOne({
-        where: { name: 'Almacén' },
-      });
+    // Get Almacén department
+    const almacenDept = await this.departmentsRepo.findOne({
+      where: { name: 'Almacén' },
+    });
 
-      if (!almacenDept) {
-        throw new NotFoundException('Almacén department not found');
-      }
-
-      // Process each item in the order
-      for (const orderItem of order.items) {
-        const medication = orderItem.medication;
-        const requestedQuantity = orderItem.quantity;
-
-        // Step 1: Deduct from ALMACEN stock
-        let almacenStock = await this.stockItemsRepo.findOne({
-          where: {
-            medication: { id: medication.id },
-            department: { id: almacenDept.id },
-          },
-        });
-
-        if (!almacenStock || almacenStock.quantity < requestedQuantity) {
-          throw new BadRequestException(
-            `Insufficient stock in Almacén for ${medication.name}. Available: ${
-              almacenStock?.quantity || 0
-            }, Requested: ${requestedQuantity}`,
-          );
-        }
-
-        // Deduct from almacen
-        almacenStock.quantity -= requestedQuantity;
-        if (almacenStock.quantity === 0) {
-          await this.stockItemsRepo.remove(almacenStock);
-        } else {
-          await this.stockItemsRepo.save(almacenStock);
-        }
-
-        // Step 2: Add to requesting department stock
-        let deptStock = await this.stockItemsRepo.findOne({
-          where: {
-            medication: { id: medication.id },
-            department: { id: order.department.id },
-          },
-        });
-
-        if (deptStock) {
-          // Add to existing stock
-          deptStock.quantity += requestedQuantity;
-          await this.stockItemsRepo.save(deptStock);
-        } else {
-          // Create new stock entry
-          const newDeptStock = new StockItem();
-          newDeptStock.medication = medication;
-          newDeptStock.department = order.department;
-          newDeptStock.quantity = requestedQuantity;
-          await this.stockItemsRepo.save(newDeptStock);
-        }
-
-        // Step 3: Create delivery item
-        const deliveryItem = new MedicationDeliveryItem();
-        deliveryItem.medicationDelivery = savedDelivery;
-        deliveryItem.medication = medication;
-        deliveryItem.quantity = requestedQuantity;
-        await this.deliveryItemsRepo.save(deliveryItem);
-      }
+    if (!almacenDept) {
+      throw new NotFoundException('Almacén department not found');
     }
 
-    return this.ordersRepo.save(order);
+    // Process each item in the order
+    for (const orderItem of order.items) {
+      const medication = orderItem.medication;
+      const requestedQuantity = orderItem.quantity;
+
+      // Step 1: Deduct from ALMACEN stock
+      let almacenStock = await this.stockItemsRepo.findOne({
+        where: {
+          medication: { id: medication.id },
+          department: { id: almacenDept.id },
+        },
+      });
+
+      if (!almacenStock || almacenStock.quantity < requestedQuantity) {
+        throw new BadRequestException(
+          `Insufficient stock in Almacén for ${medication.name}. Available: ${almacenStock?.quantity || 0
+          }, Requested: ${requestedQuantity}`,
+        );
+      }
+
+      // Deduct from almacen
+      almacenStock.quantity -= requestedQuantity;
+      if (almacenStock.quantity === 0) {
+        await this.stockItemsRepo.remove(almacenStock);
+      } else {
+        await this.stockItemsRepo.save(almacenStock);
+      }
+
+      // Step 2: Create delivery item (NOT adding to department stock yet)
+      const deliveryItem = new MedicationDeliveryItem();
+      deliveryItem.medicationDelivery = savedDelivery;
+      deliveryItem.medication = medication;
+      deliveryItem.quantity = requestedQuantity;
+      await this.deliveryItemsRepo.save(deliveryItem);
+    }
   }
+
+  return this.ordersRepo.save(order);
+}
+
 }

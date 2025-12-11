@@ -5,6 +5,7 @@ import { MedicationDelivery, DeliveryStatus } from './medication-delivery.entity
 import { MedicationDeliveryItem } from '../medication-deliveries-items/medication-delivery-item.entity';
 import { Department } from '../departments/department.entity';
 import { Medication } from '../medications/medication.entity';
+import { StockItem } from 'src/stock-items/stock-item.entity';
 
 @Injectable()
 export class MedicationDeliveriesService {
@@ -20,6 +21,9 @@ export class MedicationDeliveriesService {
 
     @InjectRepository(Medication)
     private medicationsRepo: Repository<Medication>,
+
+    @InjectRepository(StockItem)
+    private stockItemsRepo: Repository<StockItem>,
   ) {}
 
   async create(body: {
@@ -34,34 +38,27 @@ export class MedicationDeliveriesService {
       throw new BadRequestException('At least one item is required');
     }
 
-    // Get department
     const department = await this.departmentsRepo.findOne({
       where: { id: body.departmentId },
     });
     if (!department) throw new NotFoundException('Department not found');
 
-    // Create delivery
     const delivery = this.deliveriesRepo.create({
       department,
       status: DeliveryStatus.PENDING,
     });
     const savedDelivery = await this.deliveriesRepo.save(delivery);
 
-    // Create items for this delivery
     for (const itemData of body.items) {
       if (!itemData.medicationId || itemData.quantity <= 0) {
-        throw new BadRequestException(
-          'Invalid medication or quantity',
-        );
+        throw new BadRequestException('Invalid medication or quantity');
       }
 
       const medication = await this.medicationsRepo.findOne({
         where: { id: itemData.medicationId },
       });
       if (!medication) {
-        throw new NotFoundException(
-          `Medication ${itemData.medicationId} not found`,
-        );
+        throw new NotFoundException(`Medication ${itemData.medicationId} not found`);
       }
 
       const item = this.itemsRepo.create({
@@ -99,9 +96,81 @@ export class MedicationDeliveriesService {
     });
   }
 
-  async updateStatus(id: string, status: DeliveryStatus) {
+  async updateStatus(id: string, status: DeliveryStatus, comment?: string) {
     const delivery = await this.findOne(id);
+    const previousStatus = delivery.status;
+
     delivery.status = status;
+
+    if (comment) {
+      delivery.comment = comment;
+    }
+
+    // Case 1: Delivery is CONFIRMED/DELIVERED
+    if (status === DeliveryStatus.DELIVERED && previousStatus !== DeliveryStatus.DELIVERED) {
+      // Add items to department stock
+      for (const item of delivery.items) {
+        const medication = item.medication;
+        const deliveredQuantity = item.quantity;
+
+        let deptStock = await this.stockItemsRepo.findOne({
+          where: {
+            medication: { id: medication.id },
+            department: { id: delivery.department.id },
+          },
+        });
+
+        if (deptStock) {
+          deptStock.quantity += deliveredQuantity;
+          await this.stockItemsRepo.save(deptStock);
+        } else {
+          const newDeptStock = new StockItem();
+          newDeptStock.medication = medication;
+          newDeptStock.department = delivery.department;
+          newDeptStock.quantity = deliveredQuantity;
+          await this.stockItemsRepo.save(newDeptStock);
+        }
+      }
+    }
+
+    // Case 2: Delivery is CANCELED - Return items to Almacén stock
+    if (status === DeliveryStatus.CANCELED && previousStatus !== DeliveryStatus.CANCELED) {
+      // Get Almacén department
+      const almacenDept = await this.departmentsRepo.findOne({
+        where: { name: 'Almacén' },
+      });
+
+      if (!almacenDept) {
+        throw new NotFoundException('Almacén department not found');
+      }
+
+      // Return each item back to Almacén stock
+      for (const item of delivery.items) {
+        const medication = item.medication;
+        const returnQuantity = item.quantity;
+
+        let almacenStock = await this.stockItemsRepo.findOne({
+          where: {
+            medication: { id: medication.id },
+            department: { id: almacenDept.id },
+          },
+        });
+
+        if (almacenStock) {
+          // Add back to existing stock
+          almacenStock.quantity += returnQuantity;
+          await this.stockItemsRepo.save(almacenStock);
+        } else {
+          // Create new stock entry if it doesn't exist
+          const newAlmacenStock = new StockItem();
+          newAlmacenStock.medication = medication;
+          newAlmacenStock.department = almacenDept;
+          newAlmacenStock.quantity = returnQuantity;
+          await this.stockItemsRepo.save(newAlmacenStock);
+        }
+      }
+    }
+
     return this.deliveriesRepo.save(delivery);
   }
 

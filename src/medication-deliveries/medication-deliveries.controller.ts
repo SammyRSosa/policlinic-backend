@@ -44,9 +44,9 @@ export class MedicationDeliveriesController {
   @Patch(':id/status')
   updateStatus(
     @Param('id') id: string,
-    @Body() body: { status: DeliveryStatus },
+    @Body() body: { status: DeliveryStatus; comment?: string }
   ) {
-    return this.service.updateStatus(id, body.status);
+    return this.service.updateStatus(id, body.status, body.comment);
   }
 
   @Delete(':id')

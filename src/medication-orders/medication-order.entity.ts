@@ -30,6 +30,9 @@ export class MedicationOrder {
   @ManyToOne(() => HeadOfDepartment, { nullable: false })
   head: HeadOfDepartment;
 
+  @Column({ type: 'text', nullable: true })
+  comment: string;
+
   @Column({ type: 'enum', enum: MedicationOrderStatus, default: MedicationOrderStatus.PENDING })
   status: MedicationOrderStatus;
 

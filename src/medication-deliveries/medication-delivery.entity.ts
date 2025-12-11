@@ -46,4 +46,10 @@ export class MedicationDelivery {
 
   @CreateDateColumn()
   createdAt: Date;
+
+  @Column({ 
+    type: 'text', 
+    nullable: true 
+  })
+  comment: string
 }

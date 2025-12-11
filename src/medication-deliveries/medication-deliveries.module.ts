@@ -8,6 +8,7 @@ import { MedicationDeliveryItem } from '../medication-deliveries-items/medicatio
 import { Department } from '../departments/department.entity';
 import { Medication } from '../medications/medication.entity';
 import { Worker } from '../workers/worker.entity';
+import { StockItem } from 'src/stock-items/stock-item.entity';
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import { Worker } from '../workers/worker.entity';
       Department,
       Medication,
       Worker,
+      StockItem
     ]),
   ],
   providers: [MedicationDeliveriesService],

@@ -22,8 +22,11 @@ export class MedicationOrdersController {
     return this.ordersService.findAll();
   }
 
-  @Post('respond/:id')
-  respond(@Param('id') id: string, @Body() body: { accept: boolean }) {
-    return this.ordersService.respond(id, body.accept);
+   @Post('respond/:id')
+  respond(
+    @Param('id') id: string,
+    @Body() body: { accept: boolean; comment?: string }
+  ) {
+    return this.ordersService.respond(id, body.accept, body.comment);
   }
 }
