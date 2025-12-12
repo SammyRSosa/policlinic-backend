@@ -5,7 +5,6 @@ import { UsersService } from './users/users.service';
 import { UsersModule } from './users/users.module';
 import { MedicationsModule } from './medications/medications.module';
 import { DepartmentsModule } from './departments/departments.module';
-import { DepartmentStocksModule } from './department-stocks/department-stocks.module';
 import { RemissionsModule } from './remissions/remissions.module';
 import { ConsultationsModule } from './consultations/consultations.module';
 import { WorkersModule } from './workers/workers.module';
@@ -43,7 +42,6 @@ import { MedicationDeliveryItemsModule } from './medication-deliveries-items/med
     UsersModule,
     DepartmentsModule,
     MedicationsModule,
-    DepartmentStocksModule,
     RemissionsModule,
     ConsultationsModule,
     WorkersModule,

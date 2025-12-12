@@ -1,13 +1,15 @@
 import { Controller, Post, Get, Param, Body, Delete } from '@nestjs/common';
 import { ConsultationPrescriptionsService } from './consultations-prescriptions.service';
+import { CreateConsultationPrescriptionDto } from './dto/create-consultation-prescription.dto';
+
 
 @Controller('consultation-prescriptions')
 export class ConsultationPrescriptionsController {
-  constructor(private readonly service: ConsultationPrescriptionsService) {}
+  constructor(private readonly service: ConsultationPrescriptionsService) { }
 
   @Post()
-  create(@Body() body: { consultationId: string; medicationId: string; quantity: number; instructions?: string }) {
-    return this.service.create(body.consultationId, body.medicationId, body.quantity, body.instructions);
+  create(@Body() dto: CreateConsultationPrescriptionDto) {
+    return this.service.create(dto.consultationId, dto.medicationId, dto.quantity, dto.instructions);
   }
 
   @Get()
