@@ -1,5 +1,6 @@
 import { Controller, Get, Post, Param, Body } from '@nestjs/common';
 import { StockItemsService } from './stocks-items.service';
+import { CreateStockItemDto } from './dto/create-stock-item.dto';
 
 @Controller('stock-items')
 export class StockItemsController {
@@ -9,7 +10,7 @@ export class StockItemsController {
   @Post('create/:departmentId')
   create(
     @Param('departmentId') departmentId: string,
-    @Body() body: { medicationId: string; quantity?: number }, // ✅ Cambiar a medicationId
+    @Body() body: CreateStockItemDto, // ✅ Cambiar a medicationId
   ) {
     return this.stockItemsService.create(departmentId, body.medicationId, body.quantity);
   }
