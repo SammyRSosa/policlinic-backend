@@ -70,8 +70,12 @@ export class ConsultationsService {
     let internalRemission, externalRemission;
 
     if (remissionId) {
-      internalRemission = await this.RemRepo.findOne({ where: { id: remissionId } });
+      internalRemission = await this.RemRepo.findOne({
+        where: { id: remissionId },
+        relations: ['patient']
+      });
     }
+
     if (internalRemission?.medicalPost) {
       externalRemission = internalRemission as ExternalRemission;
       internalRemission = null;
@@ -86,17 +90,18 @@ export class ConsultationsService {
       externalRemission,
     });
 
-    if (internalRemission){
-      internalRemission.consultation = consultation;
-      await this.RemRepo.save(internalRemission);}
-    else{
-      externalRemission.consultation = consultation;
-      await this.RemRepo.save(externalRemission);}
-
-
     const saved = await this.programmedRepo.save(consultation);
 
-    await this.attachConsultationToPatientHistory(patientId, saved);
+    if (internalRemission) {
+      internalRemission.consultation = consultation;
+      await this.RemRepo.save(internalRemission);
+      await this.attachConsultationToPatientHistory(internalRemission.patient.id, saved);
+    }
+    else {
+      externalRemission.consultation = consultation;
+      await this.RemRepo.save(externalRemission);
+      await this.attachConsultationToPatientHistory(externalRemission.patient.id, saved);
+    }
 
     return instanceToPlain(saved);
   }
@@ -164,26 +169,26 @@ export class ConsultationsService {
   //  BY DOCTOR / WORKER
   // -------------------------------------------------------
   async findByWorker(workerId: string) {
-  const data = await this.consultationsRepo
-    .createQueryBuilder('consultation')
-    .leftJoinAndSelect('consultation.department', 'department')
-    .leftJoinAndSelect('consultation.clinicHistory', 'clinicHistory')
-    .leftJoinAndSelect('consultation.prescriptions', 'prescriptions')
-    .leftJoinAndSelect('prescriptions.medication', 'medication')
-    .leftJoinAndSelect('consultation.patient', 'patient')
-    .leftJoinAndSelect('consultation.mainDoctor', 'mainDoctor')
-    .leftJoinAndSelect('consultation.internalRemission', 'internalRemission')
-    .leftJoinAndSelect('internalRemission.patient', 'internalRemissionPatient')
-    .leftJoinAndSelect('consultation.externalRemission', 'externalRemission')
-    .leftJoinAndSelect('externalRemission.patient', 'externalRemissionPatient')
-    .where('consultation.mainDoctorId = :workerId', { workerId })
-    .orderBy('consultation.createdAt', 'DESC')
-    .getMany();
+    const data = await this.consultationsRepo
+      .createQueryBuilder('consultation')
+      .leftJoinAndSelect('consultation.department', 'department')
+      .leftJoinAndSelect('consultation.clinicHistory', 'clinicHistory')
+      .leftJoinAndSelect('consultation.prescriptions', 'prescriptions')
+      .leftJoinAndSelect('prescriptions.medication', 'medication')
+      .leftJoinAndSelect('consultation.patient', 'patient')
+      .leftJoinAndSelect('consultation.mainDoctor', 'mainDoctor')
+      .leftJoinAndSelect('consultation.internalRemission', 'internalRemission')
+      .leftJoinAndSelect('internalRemission.patient', 'internalRemissionPatient')
+      .leftJoinAndSelect('consultation.externalRemission', 'externalRemission')
+      .leftJoinAndSelect('externalRemission.patient', 'externalRemissionPatient')
+      .where('consultation.mainDoctorId = :workerId', { workerId })
+      .orderBy('consultation.createdAt', 'DESC')
+      .getMany();
 
-  return data;
-}
+    return data;
+  }
 
-   async findByNurse(nurseId: string) {
+  async findByNurse(nurseId: string) {
     const nurse = await this.workersRepo.findOne({
       where: { id: nurseId },
       relations: ['department'],
@@ -252,28 +257,30 @@ export class ConsultationsService {
     return instanceToPlain(removed);
   }
   // ConsultationsService
-async findAllForDoctor() {
-  const data = await this.consultationsRepo
-    .createQueryBuilder('consultation')
-    .leftJoinAndSelect('consultation.department', 'department')
-    .leftJoinAndSelect('consultation.clinicHistory', 'clinicHistory')
-    .leftJoinAndSelect('consultation.prescriptions', 'prescriptions')
-    .leftJoinAndSelect('prescriptions.medication', 'medication')
-    .leftJoinAndSelect('consultation.patient', 'patient')
-    .leftJoinAndSelect('consultation.mainDoctor', 'mainDoctor')
-    .leftJoinAndSelect('consultation.internalRemission', 'internalRemission')
-    .leftJoinAndSelect('consultation.externalRemission', 'externalRemission')
-    .orderBy('consultation.createdAt', 'DESC')
-    .getMany();
+  async findAllForDoctor() {
+    const data = await this.consultationsRepo
+      .createQueryBuilder('consultation')
+      .leftJoinAndSelect('consultation.department', 'department')
+      .leftJoinAndSelect('consultation.clinicHistory', 'clinicHistory')
+      .leftJoinAndSelect('consultation.prescriptions', 'prescriptions')
+      .leftJoinAndSelect('prescriptions.medication', 'medication')
+      .leftJoinAndSelect('consultation.patient', 'patient')
+      .leftJoinAndSelect('consultation.mainDoctor', 'mainDoctor')
+      .leftJoinAndSelect('consultation.internalRemission', 'internalRemission')
+      .leftJoinAndSelect('consultation.externalRemission', 'externalRemission')
+      .orderBy('consultation.createdAt', 'DESC')
+      .getMany();
 
-  return instanceToPlain(data);
-}
+    return instanceToPlain(data);
+  }
 
   // -------------------------------------------------------
   //  ATTACH CONSULTATION TO CLINIC HISTORY
   // -------------------------------------------------------
 
   private async attachConsultationToPatientHistory(patientId: string, consultation: Consultation) {
+
+    console.log(patientId,consultation)
     const patient = await this.patientsRepo.findOne({
       where: { id: patientId },
       relations: ['clinicHistory', 'clinicHistory.consultations'], // <-- LOAD THE CONSULTATIONS
@@ -297,6 +304,9 @@ async findAllForDoctor() {
 
     consultation.clinicHistory = clinicHistory;
     await this.consultationsRepo.save(consultation);
+
+    console.log(clinicHistory)
+    console.log(consultation)
 
     return instanceToPlain(clinicHistory);
   }
