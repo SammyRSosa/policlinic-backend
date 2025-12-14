@@ -5,6 +5,9 @@ import { JwtAuthGuard } from 'src/auth/jwt.guard';
 import { RolesGuard } from 'src/auth/roles.guard';
 import { Roles } from 'src/auth/roles.decorator';
 import { UserRole } from 'src/users/user.entity';
+import { CreateProgrammedConsultationDto } from './dto/create-programmed.dto';
+import { CreateEmergencyConsultationDto } from './dto/create-emergency.dto';
+import { UpdateConsultationStatusDto } from './dto/update-status.dto';
 
 @Controller('consultations')
 export class ConsultationsController {
@@ -14,15 +17,15 @@ export class ConsultationsController {
   @Post('programmed')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.DOCTOR, UserRole.HEAD_OF_DEPARTMENT)
-  createProgrammed(@Body() body: { remissionId?: string; scheduledAt: Date; remissionType?: 'internal' | 'external'; patientId: string }, @Req() req) {
-    return this.service.createProgrammed(body.patientId, req.user.entityId, body.scheduledAt, body.remissionId, body.remissionType);
+  createProgrammed(@Body() body: CreateProgrammedConsultationDto, @Req() req) {
+    return this.service.createProgrammed(body.patientId, req.user.entityId, new Date(body.scheduledAt), body.remissionId, body.remissionType);
   }
 
   // 🚨 Create emergency consultation (doctor creates from token)
   @Post('emergency')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.DOCTOR, UserRole.HEAD_OF_DEPARTMENT)
-  createEmergency(@Body() body: { patientId: string }, @Req() req) {
+  createEmergency(@Body() body: CreateEmergencyConsultationDto, @Req() req) {
     return this.service.createEmergency(body.patientId, req.user.entityId);
   }
 
@@ -30,13 +33,13 @@ export class ConsultationsController {
   findAll() {
     return this.service.findAll();
   }
-// ConsultationsController
-@Get('all-for-doctor')
-@UseGuards(JwtAuthGuard, RolesGuard)
-@Roles(UserRole.DOCTOR)
-async getAllForDoctor() {
-  return this.service.findAllForDoctor();
-}
+  // ConsultationsController
+  @Get('all-for-doctor')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.DOCTOR)
+  async getAllForDoctor() {
+    return this.service.findAllForDoctor();
+  }
 
   @Get('by-nurse')
   @UseGuards(JwtAuthGuard, RolesGuard)
@@ -50,7 +53,7 @@ async getAllForDoctor() {
   findOne(@Param('id') id: string) {
     return this.service.findOne(id);
   }
-  
+
   @Get('by-department/:departmentId')
   findByDepartment(@Param('departmentId') departmentId: string) {
     return this.service.findByDepartment(departmentId);
@@ -71,7 +74,7 @@ async getAllForDoctor() {
   }
 
   @Patch(':id/status')
-  updateStatus(@Param('id') id: string, @Body() body: { status: ConsultationStatus; diagnosis?: string }) {
+  updateStatus(@Param('id') id: string, @Body() body: UpdateConsultationStatusDto) {
     return this.service.updateStatus(id, body.status, body.diagnosis);
   }
 

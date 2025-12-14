@@ -4,6 +4,7 @@ import { Roles } from '../auth/roles.decorator';
 import { JwtAuthGuard } from '../auth/jwt.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { UserRole } from './user.entity';
+import { UpdateUserRoleDto } from './dto/update-user-role.dto';
 
 @Controller('users')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -27,8 +28,8 @@ export class UsersController {
   // Update user role
   @Patch(':id/role')
   @Roles(UserRole.ADMIN)
-  updateRole(@Param(':id') id: string, @Body('role') role: UserRole) {
-    return this.usersService.updateRole(id, role);
+  updateRole(@Param(':id') id: string, @Body() body: UpdateUserRoleDto,) {
+    return this.usersService.updateRole(id, body.role);
   }
 
   // Delete user

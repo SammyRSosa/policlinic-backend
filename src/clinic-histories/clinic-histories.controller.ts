@@ -5,6 +5,10 @@ import { JwtAuthGuard } from 'src/auth/jwt.guard';
 import { RolesGuard } from 'src/auth/roles.guard';
 import { Roles } from 'src/auth/roles.decorator';
 import { UserRole } from 'src/users/user.entity';
+import { CreateClinicHistoryDto } from './dto/create-clinic-history.dto';
+import { UpdateClinicHistoryDto } from './dto/update-clinic-history.dto';
+import { GetByPatientDto } from './dto/get-by-patient.dto';
+
 
 @Controller('clinic-history')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -14,7 +18,7 @@ export class ClinicHistoryController {
   // 🩺 Doctors or Heads can create
   @Post()
   @Roles(UserRole.DOCTOR, UserRole.HEAD_OF_DEPARTMENT)
-  create(@Body() body: { patientId: string; notes?: string }) {
+create(@Body() body: CreateClinicHistoryDto) {
     return this.service.create(body.patientId, body.notes);
   }
 
@@ -42,14 +46,14 @@ export class ClinicHistoryController {
   // 📋 Get all clinic histories by patient
   @Get('by-patient/:patientId')
   @Roles(UserRole.ADMIN, UserRole.HEAD_OF_DEPARTMENT, UserRole.DOCTOR, UserRole.PATIENT)
-  async getByPatient(@Param('patientId') patientId: string, @Req() req) {
-    return this.service.findByPatient(patientId, req.user);
+  async getByPatient(@Param() params: GetByPatientDto, @Req() req) {
+    return this.service.findByPatient(params.patientId, req.user);
   }
 
   // 🧾 Update only for authorized medical staff
   @Patch(':id')
   @Roles(UserRole.DOCTOR, UserRole.HEAD_OF_DEPARTMENT)
-  update(@Param('id') id: string, @Body() body: { notes: string }) {
+update(@Param('id') id: string, @Body() body: UpdateClinicHistoryDto) {
     return this.service.update(id, body.notes);
   }
 

@@ -1,6 +1,7 @@
 // src/medical-posts/medical-posts.controller.ts
 import { Controller, Get, Post, Body, Param, Delete } from '@nestjs/common';
 import { MedicalPostsService } from './medical-posts.service';
+import { CreateMedicalPostDto } from './dto/create-medical-post.dto';
 
 @Controller('medical-posts')
 export class MedicalPostsController {
@@ -17,8 +18,8 @@ export class MedicalPostsController {
   }
 
   @Post()
-  create(@Body('name') name: string) {
-    return this.medicalPostsService.create(name);
+  create(@Body() body: CreateMedicalPostDto) {
+    return this.medicalPostsService.create(body.name);
   }
 
   @Delete(':id')

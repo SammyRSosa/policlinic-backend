@@ -1,12 +1,13 @@
 import { Controller, Get, Post, Param, Body, Delete } from '@nestjs/common';
 import { WorkerDepartmentService } from './workers-department.service';
+import { CreateWorkerDepartmentDto } from './dto/create-worker-department.dto';
 
 @Controller('worker-departments')
 export class WorkerDepartmentController {
   constructor(private readonly service: WorkerDepartmentService) {}
 
   @Post()
-  assign(@Body() body: { workerId: string; departmentId: string }) {
+  assign(@Body() body: CreateWorkerDepartmentDto) {
     return this.service.assign(body.workerId, body.departmentId);
   }
 
