@@ -27,7 +27,7 @@ export class ReportsService {
     private workersRepo: Repository<Worker>,
     @InjectRepository(Department)
     private departmentsRepo: Repository<Department>,
-  ) {}
+  ) { }
 
   // ===== CONSULTATIONS REPORT =====
   async getConsultationsReport(
@@ -38,12 +38,29 @@ export class ReportsService {
   ) {
     const query = this.consultationsRepo.createQueryBuilder('c');
 
-    query.leftJoinAndSelect('c.patient', 'patient');
+    // Base relations
     query.leftJoinAndSelect('c.mainDoctor', 'mainDoctor');
     query.leftJoinAndSelect('c.department', 'department');
     query.leftJoinAndSelect('c.prescriptions', 'prescriptions');
     query.leftJoinAndSelect('prescriptions.medication', 'medication');
 
+    // Emergency consultations
+    query.leftJoinAndSelect('c.patient', 'patient');
+
+    // Programmed consultations (child entity fields)
+    query.leftJoinAndSelect('c.internalRemission', 'internalRemission');
+    query.leftJoinAndSelect(
+      'internalRemission.patient',
+      'internalRemissionPatient',
+    );
+
+    query.leftJoinAndSelect('c.externalRemission', 'externalRemission');
+    query.leftJoinAndSelect(
+      'externalRemission.patient',
+      'externalRemissionPatient',
+    );
+
+    // Filters
     if (departmentId) {
       query.andWhere('c.departmentId = :departmentId', { departmentId });
     }
@@ -60,7 +77,16 @@ export class ReportsService {
     }
 
     query.orderBy('c.createdAt', 'DESC');
+
     const consultations = await query.getMany();
+
+    // 🔒 Normalize patient for frontend & reports
+    consultations.forEach((c: any) => {
+      c.patient =
+        c.patient ??
+        c.internalRemission?.patient ??
+        c.externalRemission?.patient;
+    });
 
     return {
       type: 'consultations',
@@ -155,7 +181,7 @@ export class ReportsService {
         where: { department: { id: departmentId } },
         relations: ['clinicHistory', 'clinicHistory.patient'],
       });
-      
+
       const patientIds = [
         ...new Set(
           consultations
@@ -163,7 +189,7 @@ export class ReportsService {
             .filter(Boolean)
         ),
       ];
-      
+
       if (patientIds.length > 0) {
         patients = await this.patientsRepo.findByIds(patientIds);
       }
