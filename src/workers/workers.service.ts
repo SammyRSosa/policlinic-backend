@@ -133,74 +133,131 @@ export class WorkersService {
     return worker;
   }
 
-  async updateWorker(
-    id: string,
-    updateData: UpdateWorkerDto,
-  ) {
-    const worker = await this.workersRepo.findOne({ where: { id }, relations: ['department'] })
-    if (!worker) throw new NotFoundException('Worker not found')
 
-    if (updateData.firstName) worker.firstName = updateData.firstName
-    if (updateData.lastName) worker.lastName = updateData.lastName
-    if (updateData.role) worker.role = updateData.role
+  async updateWorker(id: string, updateData: UpdateWorkerDto) {
+    // 1️⃣ Find the worker with department and role info
+    const worker = await this.workersRepo.findOne({
+      where: { id },
+      relations: ['department'],
+    });
+    if (!worker) throw new NotFoundException('Worker not found');
 
+    // 2️⃣ Update basic fields
+    if (updateData.firstName) worker.firstName = updateData.firstName;
+    if (updateData.lastName) worker.lastName = updateData.lastName;
+
+    // 3️⃣ Update department if requested
     if (updateData.departmentId) {
-      const department = await this.departmentsRepo.findOne({ where: { id: updateData.departmentId } })
-      if (!department) throw new NotFoundException('Department not found')
-      worker.department = department
+      const department = await this.departmentsRepo.findOne({
+        where: { id: updateData.departmentId },
+        relations: ['headOfDepartment'],
+      });
+      if (!department) throw new NotFoundException('Department not found');
+      worker.department = department;
     }
 
-    return this.workersRepo.save(worker)
+    // 4️⃣ Handle role changes
+    if (updateData.role) {
+      if (updateData.role === WorkerRole.HEAD_OF_DEPARTMENT) {
+        // Worker must have a department
+        if (!worker.department)
+          throw new ForbiddenException(
+            'Worker must belong to a department to be Head of Department'
+          );
+
+        const department = await this.departmentsRepo.findOne({
+          where: { id: worker.department.id },
+          relations: ['headOfDepartment'],
+        });
+
+        if (!department) throw new NotFoundException('Department not found');
+
+        if (department.headOfDepartment) {
+          // Demote previous head to doctor
+          const previousHead = department.headOfDepartment.worker;
+          previousHead.role = WorkerRole.DOCTOR;
+          await this.workersRepo.save(previousHead);
+
+          // End previous HeadOfDepartment record
+          department.headOfDepartment.endedAt = new Date();
+          await this.headsRepo.save(department.headOfDepartment);
+        }
+
+        // Promote current worker
+        worker.role = WorkerRole.HEAD_OF_DEPARTMENT;
+        await this.workersRepo.save(worker);
+
+        // Create new HeadOfDepartment record
+        const head = this.headsRepo.create({
+          worker,
+          department,
+          assignedAt: new Date(),
+        } as HeadOfDepartment);
+
+        await this.headsRepo.save(head);
+
+        // Update department link
+        department.headOfDepartment = head;
+        await this.departmentsRepo.save(department);
+      } else {
+        // Any other role change
+        worker.role = updateData.role;
+      }
+    }
+
+    // 5️⃣ Save worker
+    return this.workersRepo.save(worker);
   }
+
 
   // Método para soft delete
-async softDeleteWorker(id: string) {
-  const worker = await this.workersRepo.findOne({
-    where: { id },
-    relations: ['headOfDepartment', 'departmentHistory'],
-  });
+  async softDeleteWorker(id: string) {
+    const worker = await this.workersRepo.findOne({
+      where: { id },
+      relations: ['headOfDepartment', 'departmentHistory'],
+    });
 
-  if (!worker) throw new NotFoundException('Worker not found');
+    if (!worker) throw new NotFoundException('Worker not found');
 
-  // 1. Soft delete del worker
-  worker.active = false;
-  await this.workersRepo.save(worker);
+    // 1. Soft delete del worker
+    worker.active = false;
+    await this.workersRepo.save(worker);
 
-  // 2. Si es jefe de departamento, actualizar HeadOfDepartment y Department
-  const headRecord = await this.headsRepo.findOne({
-    where: {
-      worker: { id: worker.id },
-      endedAt: IsNull(),
-    },
-    relations: ['department'],
-  });
+    // 2. Si es jefe de departamento, actualizar HeadOfDepartment y Department
+    const headRecord = await this.headsRepo.findOne({
+      where: {
+        worker: { id: worker.id },
+        endedAt: IsNull(),
+      },
+      relations: ['department'],
+    });
 
-  if (headRecord) {
-    // Fecha de fin del jefe
-    headRecord.endedAt = new Date();
-    await this.headsRepo.save(headRecord);
+    if (headRecord) {
+      // Fecha de fin del jefe
+      headRecord.endedAt = new Date();
+      await this.headsRepo.save(headRecord);
 
-    // Quitar referencia en Department
-    if (headRecord.department) {
-      headRecord.department.headOfDepartment = null;
-      await this.departmentsRepo.save(headRecord.department);
+      // Quitar referencia en Department
+      if (headRecord.department) {
+        headRecord.department.headOfDepartment = null;
+        await this.departmentsRepo.save(headRecord.department);
+      }
     }
+
+    // 3. Marcar como inactivo en WorkerDepartment
+    const activeDeptRecords = await this.wdRepo.find({
+      where: { worker: { id: worker.id }, active: true },
+      relations: ['department'],
+    });
+
+    for (const wd of activeDeptRecords) {
+      wd.active = false;
+      wd.leftAt = new Date();
+      await this.wdRepo.save(wd);
+    }
+
+    return worker;
   }
-
-  // 3. Marcar como inactivo en WorkerDepartment
-  const activeDeptRecords = await this.wdRepo.find({
-    where: { worker: { id: worker.id }, active: true },
-    relations: ['department'],
-  });
-
-  for (const wd of activeDeptRecords) {
-    wd.active = false;
-    wd.leftAt = new Date();
-    await this.wdRepo.save(wd);
-  }
-
-  return worker;
-}
 
 
 
