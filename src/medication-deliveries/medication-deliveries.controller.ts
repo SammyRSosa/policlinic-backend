@@ -10,6 +10,8 @@ import {
 } from '@nestjs/common';
 import { MedicationDeliveriesService } from './medication-deliveries.service';
 import { DeliveryStatus } from './medication-delivery.entity';
+import { CreateMedicationDeliveryDto } from './dto/create-medication-delivery.dto';
+import { UpdateMedicationDeliveryStatusDto } from './dto/update-medication-delivery-status.dto';
 
 @Controller('medication-deliveries')
 export class MedicationDeliveriesController {
@@ -18,11 +20,7 @@ export class MedicationDeliveriesController {
   @Post()
   create(
     @Body()
-    body: {
-      departmentId: string;
-      items: { medicationId: string; quantity: number }[];
-    },
-  ) {
+    body: CreateMedicationDeliveryDto) {
     return this.service.create(body);
   }
 
@@ -44,8 +42,8 @@ export class MedicationDeliveriesController {
   @Patch(':id/status')
   updateStatus(
     @Param('id') id: string,
-    @Body() body: { status: DeliveryStatus; comment?: string }
-  ) {
+    @Body() body: UpdateMedicationDeliveryStatusDto,
+) {
     return this.service.updateStatus(id, body.status, body.comment);
   }
 

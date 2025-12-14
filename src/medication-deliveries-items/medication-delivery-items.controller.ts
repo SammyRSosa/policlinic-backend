@@ -1,5 +1,7 @@
 import { Controller, Get, Post, Param, Body, Delete, Patch } from '@nestjs/common';
 import { MedicationDeliveryItemsService } from './medication-delivery-items.service';
+import { CreateMedicationDeliveryItemDto } from './dto/create-medication-delivery-item.dto';
+import { UpdateMedicationDeliveryItemDto } from './dto/update-medication-delivery-item.dto';
 
 @Controller('medication-delivery-items')
 export class MedicationDeliveryItemsController {
@@ -8,12 +10,7 @@ export class MedicationDeliveryItemsController {
   @Post()
   create(
     @Body()
-    body: {
-      deliveryId: string;
-      medicationId: string;
-      quantity: number;
-    },
-  ) {
+    body: CreateMedicationDeliveryItemDto) {
     return this.service.create(body.deliveryId, body.medicationId, body.quantity);
   }
 
@@ -28,7 +25,7 @@ export class MedicationDeliveryItemsController {
   }
 
   @Patch(':id')
-  updateQuantity(@Param('id') id: string, @Body() body: { quantity: number }) {
+  updateQuantity(@Param('id') id: string, @Body() body: UpdateMedicationDeliveryItemDto) {
     return this.service.updateQuantity(id, body.quantity);
   }
 
