@@ -183,9 +183,22 @@ async searchByName(q: string) {
   }
 
   async onApplicationBootstrap() {
-  console.log("🔧 Inicializando departamentos por defecto...");
+  console.log('🔧 Inicializando departamentos por defecto...');
 
-  const defaultDepartments = ["Droguería", "Almacén"];
+  const defaultDepartments = [
+    'Droguería',
+    'Almacén',
+
+    // 👇 nuevos (8)
+    'Emergencias',
+    'Pediatría',
+    'Medicina Interna',
+    'Cirugía',
+    'Ginecología',
+    'Ortopedia',
+    'Cardiología',
+    'Neurología',
+  ];
 
   for (const name of defaultDepartments) {
     const exists = await this.departmentsRepo.findOne({ where: { name } });
@@ -200,8 +213,9 @@ async searchByName(q: string) {
     }
   }
 
-  console.log("✅ Departamentos iniciales listos.");
+  console.log('✅ Departamentos iniciales listos.');
 }
+
 
 
 }

@@ -27,7 +27,7 @@ export enum ConsultationStatus {
 }
 
 @Entity('consultations')
-@Unique(["mainDoctor","createdAt"])
+@Unique(["mainDoctor", "createdAt"])
 @TableInheritance({ column: { type: 'varchar', name: 'type' } })
 export abstract class Consultation {
   @PrimaryGeneratedColumn('uuid')
@@ -67,11 +67,11 @@ export class ProgrammedConsultation extends Consultation {
   scheduledAt: Date;
 
 
-  @OneToOne(() => InternalRemission, { nullable: true ,onDelete:'CASCADE'})
+  @OneToOne(() => InternalRemission, { nullable: true, onDelete: 'CASCADE' })
   @JoinColumn()
   internalRemission?: InternalRemission;
 
-  @OneToOne(() => ExternalRemission, { nullable: true ,onDelete:'CASCADE'})
+  @OneToOne(() => ExternalRemission, { nullable: true, onDelete: 'CASCADE' })
   @JoinColumn()
   externalRemission?: ExternalRemission;
 
@@ -80,7 +80,7 @@ export class ProgrammedConsultation extends Consultation {
 
 @ChildEntity('emergency')
 export class EmergencyConsultation extends Consultation {
-  @ManyToOne(() => Patient, { nullable:true })
+  @ManyToOne(() => Patient, { nullable: true })
   patient: Patient;
 
 }

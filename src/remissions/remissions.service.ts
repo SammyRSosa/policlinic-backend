@@ -10,6 +10,7 @@ import { Patient } from 'src/patients/patient.entity';
 import { Department } from 'src/departments/department.entity';
 import { Consultation } from 'src/consultations/consultation.entity';
 import { MedicalPost } from 'src/medical-posts/medical-post.entity';
+import { Worker } from 'src/workers/worker.entity';
 
 @Injectable()
 export class RemissionsService {
@@ -28,6 +29,8 @@ export class RemissionsService {
     private consultationsRepo: Repository<Consultation>,
     @InjectRepository(MedicalPost)
     private medicalPostsRepo: Repository<MedicalPost>,
+    @InjectRepository(Worker)
+    private workersRepo: Repository<Worker>,
   ) {}
 
   async createInternal(
@@ -93,6 +96,21 @@ export class RemissionsService {
     return this.remissionsRepo.find({
       where: { toDepartment: { id: departmentId } },
       relations: ['patient', 'toDepartment', 'consultation'],
+      order: { createdAt: 'DESC' },
+    });
+  }
+
+  async findByWorkerDepartment(workerId: string) {
+    const worker = await this.workersRepo.findOne({
+      where: { id: workerId },
+      relations: ['department'],
+    });
+    if (!worker) throw new NotFoundException('Worker not found');
+    if (!worker.department) throw new NotFoundException('Worker department not found');
+
+    return this.remissionsRepo.find({
+      where: { toDepartment: { id: worker.department.id } },
+      relations: ['patient', 'toDepartment', 'consultation', 'medicalPost', 'fromDepartment'],
       order: { createdAt: 'DESC' },
     });
   }
