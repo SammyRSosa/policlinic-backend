@@ -7,6 +7,8 @@ import { Medication } from './medications/medication.entity';
 
 import { User, UserRole } from './users/user.entity';
 import { Worker } from './workers/worker.entity';
+import { ClassSerializerInterceptor } from '@nestjs/common';
+import { Reflector } from '@nestjs/core';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -209,6 +211,11 @@ async function bootstrap() {
     origin: 'http://localhost:3001',
     credentials: true,
   });
+
+
+  app.useGlobalInterceptors(
+    new ClassSerializerInterceptor(app.get(Reflector)),
+  );
 
   const port = process.env.PORT ?? 3000;
   await app.listen(port);

@@ -10,6 +10,7 @@ import { Department } from '../departments/department.entity';
 import { Consultation } from '../consultations/consultation.entity';
 import { WorkerDepartment } from '../workers-department/worker-department.entity';
 import { User } from '../users/user.entity';
+import { Exclude } from 'class-transformer';
 
 export enum WorkerRole {
   ADMIN = 'admin',
@@ -43,6 +44,7 @@ export class Worker {
   active: boolean; 
 
   @ManyToOne(() => Department, (department) => department.workers, { nullable: true })
+  @Exclude()
   department?: Department;
 
   @OneToMany(() => Consultation, (consultation) => consultation.mainDoctor)
