@@ -6,7 +6,10 @@
   "transform": {
     "^.+\\.(t|j)s$": "ts-jest"
   },
-    "coverageDirectory": "./coverage-e2e",
+  "setupFilesAfterEnv": ["<rootDir>/test/setup-db.ts"],
+  "detectOpenHandles": true,
+  "forceExit": true,
+  "coverageDirectory": "./coverage-e2e",
   "moduleNameMapper": {
     "^src/(.*)$": "<rootDir>/src/$1"
   }
