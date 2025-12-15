@@ -6,10 +6,20 @@ import { HeadOfDepartment } from 'src/heads-of-departments/head-of-department.en
 import { Worker, WorkerRole } from 'src/workers/worker.entity';
 import { WorkerDepartment } from 'src/workers-department/worker-department.entity';
 import { User } from 'src/users/user.entity';
-import { BadRequestException} from '@nestjs/common';
+import { BadRequestException } from '@nestjs/common';
+import { Medication } from 'src/medications/medication.entity';
+import { StockItem } from 'src/stock-items/stock-item.entity';
+
 @Injectable()
 export class DepartmentsService implements OnApplicationBootstrap {
   constructor(
+
+    @InjectRepository(Medication)
+    private readonly medicationsRepo: Repository<Medication>,
+
+    @InjectRepository(StockItem)
+    private readonly stockItemsRepo: Repository<StockItem>,
+
     @InjectRepository(Department)
     private departmentsRepo: Repository<Department>,
 
@@ -22,6 +32,65 @@ export class DepartmentsService implements OnApplicationBootstrap {
     @InjectRepository(WorkerDepartment)
     private readonly workersdepsRepo: Repository<WorkerDepartment>,
   ) { }
+
+  /**
+   * Helper method to create stock items for all medications in a department
+   */
+  private async createStockItemsForDepartment(department: Department) {
+    const medications = await this.medicationsRepo.find();
+
+    if (medications.length === 0) {
+      console.log(`⚠️  No medications found, skipping stock items creation for "${department.name}"`);
+      return;
+    }
+
+    const stockItems = medications.map((medication) =>
+      this.stockItemsRepo.create({
+        department,
+        medication,
+        quantity: 0,
+        minThreshold: 0,
+        maxThreshold: 1000,
+      }),
+    );
+
+    await this.stockItemsRepo.save(stockItems);
+    console.log(`✅ Created ${stockItems.length} stock items for department "${department.name}"`);
+  }
+
+  /**
+   * Helper method to set up a worker as department head
+   */
+  private async setDepartmentHead(worker: Worker, department: Department) {
+    // Update worker role to HEAD_OF_DEPARTMENT
+    worker.role = WorkerRole.HEAD_OF_DEPARTMENT;
+    await this.workersRepo.save(worker);
+
+    // Create the HeadOfDepartment entity
+    const head = this.headsRepo.create({
+      worker,
+      department,
+      assignedAt: new Date(),
+    });
+    await this.headsRepo.save(head);
+
+    // Update department with head
+    department.headOfDepartment = head;
+    await this.departmentsRepo.save(department);
+
+    // Assign worker to department via WorkerDepartment
+    const workerDept = new WorkerDepartment();
+    workerDept.worker = worker;
+    workerDept.department = department;
+    workerDept.active = true;
+    await this.workersdepsRepo.save(workerDept);
+
+    // Update worker's current department
+    worker.department = department;
+    await this.workersRepo.save(worker);
+
+    console.log(`👨‍⚕️ Assigned ${worker.firstName} ${worker.lastName} as head of "${department.name}"`);
+  }
 
   // departments.service.ts
   async findByHead(workerId: string) {
@@ -52,45 +121,36 @@ export class DepartmentsService implements OnApplicationBootstrap {
     return head.department;
   }
 
-  async create(name: string, headWorkerId: string) {
-    // 1. Find the worker who will be the head
-    const worker = await this.workersRepo.findOne({
-      where: { id: headWorkerId },
-    });
-    if (!worker) throw new NotFoundException('Worker not found');
-
-    // 2. Update worker role to HEAD_OF_DEPARTMENT
-    worker.role = WorkerRole.HEAD_OF_DEPARTMENT;
-    await this.workersRepo.save(worker);
-
-    // 3. Create the Department first
-    const department = this.departmentsRepo.create({
-      name,
-    });
+  /**
+   * Create a new department
+   * @param name - Department name (required)
+   * @param headWorkerId - Worker ID to assign as head (optional)
+   */
+  async create(name: string, headWorkerId?: string) {
+    // 1. Create the department first
+    const department = this.departmentsRepo.create({ name });
     await this.departmentsRepo.save(department);
+    console.log(`🏢 Created department: "${name}"`);
 
-    // 4. Create the HeadOfDepartment entity
-    const head = this.headsRepo.create({
-      worker,
-      department,
-      assignedAt: new Date(),
-    });
-    await this.headsRepo.save(head);
+    // 2. If headWorkerId is provided, set up the head
+    if (headWorkerId) {
+      const worker = await this.workersRepo.findOne({
+        where: { id: headWorkerId },
+      });
 
-    // 5. Update department with head
-    department.headOfDepartment = head;
-    await this.departmentsRepo.save(department);
+      if (!worker) {
+        // Clean up the created department if worker not found
+        await this.departmentsRepo.remove(department);
+        throw new NotFoundException('Worker not found');
+      }
 
-    // 6. ✅ Assign worker to department via WorkerDepartment
-    const workerDept = new WorkerDepartment();
-    workerDept.worker = worker;
-    workerDept.department = department;
-    workerDept.active = true;
-    await this.workersdepsRepo.save(workerDept);
+      await this.setDepartmentHead(worker, department);
+    } else {
+      console.log(`⚠️  Department "${name}" created without a head`);
+    }
 
-    // 7. ✅ Update worker's current department
-    worker.department = department;
-    await this.workersRepo.save(worker);
+    // 3. Create stock items for all medications
+    await this.createStockItemsForDepartment(department);
 
     return department;
   }
@@ -101,7 +161,6 @@ export class DepartmentsService implements OnApplicationBootstrap {
       .where('LOWER(d.name) LIKE :q', { q: `%${q.toLowerCase()}%` })
       .getMany();
   }
-
 
   async findAll() {
     return this.departmentsRepo.find({
@@ -233,7 +292,6 @@ export class DepartmentsService implements OnApplicationBootstrap {
     return this.departmentsRepo.save(department);
   }
 
-
   async remove(id: string) {
     const department = await this.findOne(id);
     await this.departmentsRepo.remove(department);
@@ -246,8 +304,6 @@ export class DepartmentsService implements OnApplicationBootstrap {
     const defaultDepartments = [
       'Droguería',
       'Almacén',
-
-      // 👇 nuevos (8)
       'Emergencias',
       'Pediatría',
       'Medicina Interna',
@@ -264,8 +320,8 @@ export class DepartmentsService implements OnApplicationBootstrap {
       if (!exists) {
         console.log(`➡️ Creando departamento inicial: ${name}`);
 
-        const department = this.departmentsRepo.create({ name });
-        await this.departmentsRepo.save(department);
+        // Create department WITHOUT a head (no headWorkerId provided)
+        await this.create(name);
       } else {
         console.log(`✔️ Departamento '${name}' ya existe, no se crea de nuevo.`);
       }
@@ -273,7 +329,4 @@ export class DepartmentsService implements OnApplicationBootstrap {
 
     console.log('✅ Departamentos iniciales listos.');
   }
-
-
-
 }

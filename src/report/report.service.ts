@@ -99,6 +99,44 @@ export class ReportsService {
     };
   }
 
+  async getMonthlyMedicationConsumption(
+    medicationId: string,
+    month: string,
+  ) {
+    const raw = await this.consultationsRepo.query(
+      `
+      SELECT
+        d.id AS "departmentId",
+        d.name AS "departmentName",
+        SUM(cp.quantity) AS "totalConsumed",
+        si.quantity AS "currentStock",
+        si."minThreshold",
+        si."maxThreshold"
+      FROM consultation_prescriptions cp
+      JOIN consultations c ON c.id = cp."consultationId"
+      JOIN departments d ON d.id = c."departmentId"
+      JOIN stock_items si
+        ON si."departmentId" = d.id
+       AND si."medicationId" = cp."medicationId"
+      WHERE cp."medicationId" = $1
+        AND DATE_TRUNC('month', c."createdAt") = DATE_TRUNC('month', $2::date)
+      GROUP BY
+        d.id, d.name, si.quantity, si."minThreshold", si."maxThreshold"
+      `,
+      [medicationId, month],
+    );
+
+    return raw.map((row) => ({
+      ...row,
+      status:
+        row.currentStock < row.minThreshold
+          ? 'CRITICAL'
+          : row.currentStock > row.maxThreshold
+          ? 'OVERSTOCK'
+          : 'OK',
+    }));
+  }
+
   // ===== MEDICATIONS/STOCK REPORT =====
   async getMedicationsReport(departmentId?: string) {
     let stockItems: any[] = [];

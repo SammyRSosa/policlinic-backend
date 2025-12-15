@@ -1,7 +1,10 @@
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne } from 'typeorm';
 import { Department } from '../departments/department.entity';
 import { Medication } from '../medications/medication.entity';
+import { Unique } from 'typeorm';
 
+
+@Unique(['medication', 'department'])
 @Entity('stock_items')
 export class StockItem {
   @PrimaryGeneratedColumn('uuid')

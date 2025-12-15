@@ -5,5 +5,6 @@ export class CreateDepartmentDto {
   name: string;
 
   @IsUUID()
+  @IsOptional()
   headWorkerId: string; // opcional si se crea sin asignar jefe
 }
