@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Param, Body, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Param, Body, Delete, HttpCode, HttpStatus } from '@nestjs/common';
 import { WorkerDepartmentService } from './workers-department.service';
 import { CreateWorkerDepartmentDto } from './dto/create-worker-department.dto';
 
@@ -27,7 +27,8 @@ export class WorkerDepartmentController {
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.service.remove(id);
+  @HttpCode(HttpStatus.OK)
+  deactivate(@Param('id') id: string) {
+    return this.service.deactivate(id);
   }
 }

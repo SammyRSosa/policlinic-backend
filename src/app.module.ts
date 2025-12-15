@@ -71,6 +71,7 @@ dotenv.config({
     MedicalPostsModule,
     SeedModule,
     MedicationDelivery,
+    ReportsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

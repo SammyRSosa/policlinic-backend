@@ -1,18 +1,30 @@
-import { Controller, Get, Post, Param, Body } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Param,
+  Body,
+  Patch,
+} from '@nestjs/common';
 import { StockItemsService } from './stocks-items.service';
 import { CreateStockItemDto } from './dto/create-stock-item.dto';
+import { UpdateStockItemDto } from './dto/update-stock-item.dto';
 
 @Controller('stock-items')
 export class StockItemsController {
   constructor(private readonly stockItemsService: StockItemsService) {}
 
-  // ✅ CAMBIAR: Recibir medicationId en el body
+  // ⚠️ You will rarely need this manually now, but it’s fine to keep
   @Post('create/:departmentId')
   create(
     @Param('departmentId') departmentId: string,
-    @Body() body: CreateStockItemDto, // ✅ Cambiar a medicationId
+    @Body() body: CreateStockItemDto,
   ) {
-    return this.stockItemsService.create(departmentId, body.medicationId, body.quantity);
+    return this.stockItemsService.create(
+      departmentId,
+      body.medicationId,
+      body.quantity,
+    );
   }
 
   @Get()
@@ -25,18 +37,27 @@ export class StockItemsController {
     return this.stockItemsService.findByDepartment(departmentId);
   }
 
-  // ✅ NUEVO: Endpoint para buscar por medicamento
   @Get('medication/:medicationId')
   findByMedication(@Param('medicationId') medicationId: string) {
     return this.stockItemsService.findByMedication(medicationId);
   }
 
-  // ✅ NUEVO: Endpoint para buscar por departamento y medicamento
   @Get('department/:departmentId/medication/:medicationId')
   findByDepartmentAndMedication(
     @Param('departmentId') departmentId: string,
     @Param('medicationId') medicationId: string,
   ) {
-    return this.stockItemsService.findByDepartmentAndMedication(departmentId, medicationId);
+    return this.stockItemsService.findByDepartmentAndMedication(
+      departmentId,
+      medicationId,
+    );
+  }
+
+  // ⭐ THE IMPORTANT ONE
+  @Patch()
+  update(
+    @Body() dto: UpdateStockItemDto,
+  ) {
+    return this.stockItemsService.updateThresholds(dto);
   }
 }

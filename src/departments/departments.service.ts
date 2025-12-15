@@ -6,10 +6,20 @@ import { HeadOfDepartment } from 'src/heads-of-departments/head-of-department.en
 import { Worker, WorkerRole } from 'src/workers/worker.entity';
 import { WorkerDepartment } from 'src/workers-department/worker-department.entity';
 import { User } from 'src/users/user.entity';
+import { BadRequestException } from '@nestjs/common';
+import { Medication } from 'src/medications/medication.entity';
+import { StockItem } from 'src/stock-items/stock-item.entity';
 
 @Injectable()
 export class DepartmentsService implements OnApplicationBootstrap {
   constructor(
+
+    @InjectRepository(Medication)
+    private readonly medicationsRepo: Repository<Medication>,
+
+    @InjectRepository(StockItem)
+    private readonly stockItemsRepo: Repository<StockItem>,
+
     @InjectRepository(Department)
     private departmentsRepo: Repository<Department>,
 
@@ -22,6 +32,65 @@ export class DepartmentsService implements OnApplicationBootstrap {
     @InjectRepository(WorkerDepartment)
     private readonly workersdepsRepo: Repository<WorkerDepartment>,
   ) { }
+
+  /**
+   * Helper method to create stock items for all medications in a department
+   */
+  private async createStockItemsForDepartment(department: Department) {
+    const medications = await this.medicationsRepo.find();
+
+    if (medications.length === 0) {
+      console.log(`⚠️  No medications found, skipping stock items creation for "${department.name}"`);
+      return;
+    }
+
+    const stockItems = medications.map((medication) =>
+      this.stockItemsRepo.create({
+        department,
+        medication,
+        quantity: 0,
+        minThreshold: 0,
+        maxThreshold: 1000,
+      }),
+    );
+
+    await this.stockItemsRepo.save(stockItems);
+    console.log(`✅ Created ${stockItems.length} stock items for department "${department.name}"`);
+  }
+
+  /**
+   * Helper method to set up a worker as department head
+   */
+  private async setDepartmentHead(worker: Worker, department: Department) {
+    // Update worker role to HEAD_OF_DEPARTMENT
+    worker.role = WorkerRole.HEAD_OF_DEPARTMENT;
+    await this.workersRepo.save(worker);
+
+    // Create the HeadOfDepartment entity
+    const head = this.headsRepo.create({
+      worker,
+      department,
+      assignedAt: new Date(),
+    });
+    await this.headsRepo.save(head);
+
+    // Update department with head
+    department.headOfDepartment = head;
+    await this.departmentsRepo.save(department);
+
+    // Assign worker to department via WorkerDepartment
+    const workerDept = new WorkerDepartment();
+    workerDept.worker = worker;
+    workerDept.department = department;
+    workerDept.active = true;
+    await this.workersdepsRepo.save(workerDept);
+
+    // Update worker's current department
+    worker.department = department;
+    await this.workersRepo.save(worker);
+
+    console.log(`👨‍⚕️ Assigned ${worker.firstName} ${worker.lastName} as head of "${department.name}"`);
+  }
 
   // departments.service.ts
   async findByHead(workerId: string) {
@@ -37,7 +106,7 @@ export class DepartmentsService implements OnApplicationBootstrap {
     if (worker.department) {
       return this.departmentsRepo.findOne({
         where: { id: worker.department.id },
-        relations: ['headOfDepartment', 'headOfDepartment.worker', 'workers','stockItems'],
+        relations: ['headOfDepartment', 'headOfDepartment.worker', 'workers', 'stockItems'],
       });
     }
 
@@ -52,56 +121,46 @@ export class DepartmentsService implements OnApplicationBootstrap {
     return head.department;
   }
 
-  async create(name: string, headWorkerId: string) {
-    // 1. Find the worker who will be the head
-    const worker = await this.workersRepo.findOne({
-      where: { id: headWorkerId },
-    });
-    if (!worker) throw new NotFoundException('Worker not found');
-
-    // 2. Update worker role to HEAD_OF_DEPARTMENT
-    worker.role = WorkerRole.HEAD_OF_DEPARTMENT;
-    await this.workersRepo.save(worker);
-
-    // 3. Create the Department first
-    const department = this.departmentsRepo.create({
-      name,
-    });
+  /**
+   * Create a new department
+   * @param name - Department name (required)
+   * @param headWorkerId - Worker ID to assign as head (optional)
+   */
+  async create(name: string, headWorkerId?: string) {
+    // 1. Create the department first
+    const department = this.departmentsRepo.create({ name });
     await this.departmentsRepo.save(department);
+    console.log(`🏢 Created department: "${name}"`);
 
-    // 4. Create the HeadOfDepartment entity
-    const head = this.headsRepo.create({
-      worker,
-      department,
-      assignedAt: new Date(),
-    });
-    await this.headsRepo.save(head);
+    // 2. If headWorkerId is provided, set up the head
+    if (headWorkerId) {
+      const worker = await this.workersRepo.findOne({
+        where: { id: headWorkerId },
+      });
 
-    // 5. Update department with head
-    department.headOfDepartment = head;
-    await this.departmentsRepo.save(department);
+      if (!worker) {
+        // Clean up the created department if worker not found
+        await this.departmentsRepo.remove(department);
+        throw new NotFoundException('Worker not found');
+      }
 
-    // 6. ✅ Assign worker to department via WorkerDepartment
-    const workerDept = new WorkerDepartment();
-    workerDept.worker = worker;
-    workerDept.department = department;
-    workerDept.active = true;
-    await this.workersdepsRepo.save(workerDept);
+      await this.setDepartmentHead(worker, department);
+    } else {
+      console.log(`⚠️  Department "${name}" created without a head`);
+    }
 
-    // 7. ✅ Update worker's current department
-    worker.department = department;
-    await this.workersRepo.save(worker);
+    // 3. Create stock items for all medications
+    await this.createStockItemsForDepartment(department);
 
     return department;
   }
-  
-async searchByName(q: string) {
-  return this.departmentsRepo
-    .createQueryBuilder('d')
-    .where('LOWER(d.name) LIKE :q', { q: `%${q.toLowerCase()}%` })
-    .getMany();
-}
 
+  async searchByName(q: string) {
+    return this.departmentsRepo
+      .createQueryBuilder('d')
+      .where('LOWER(d.name) LIKE :q', { q: `%${q.toLowerCase()}%` })
+      .getMany();
+  }
 
   async findAll() {
     return this.departmentsRepo.find({
@@ -119,58 +178,115 @@ async searchByName(q: string) {
   }
 
   async update(id: string, dto: { name?: string; headWorkerId?: string }) {
-    const department = await this.findOne(id);
+    const department = await this.departmentsRepo.findOne({
+      where: { id },
+      relations: ['headOfDepartment', 'headOfDepartment.worker'],
+    });
+
+    if (!department) {
+      throw new NotFoundException('Department not found');
+    }
 
     if (dto.name) {
       department.name = dto.name;
     }
 
     if (dto.headWorkerId) {
-      const worker = await this.workersRepo.findOne({
+      // 🧠 Load new head
+      const newHead = await this.workersRepo.findOne({
         where: { id: dto.headWorkerId },
         relations: ['department'],
       });
-      if (!worker) throw new NotFoundException('Worker not found');
 
-      // Deactivate previous head assignments
-      if (department.headOfDepartment) {
-        await this.workersdepsRepo.update(
-          { worker: { id: department.headOfDepartment.worker.id }, department: { id }, active: true },
-          { active: false, leftAt: new Date() },
+      if (!newHead) {
+        throw new NotFoundException('Worker not found');
+      }
+
+      // ✅ Check if worker is already head of a different department
+      const existingHeadPosition = await this.headsRepo.findOne({
+        where: {
+          worker: { id: newHead.id },
+        },
+        relations: ['department'],
+      });
+
+      if (
+        existingHeadPosition &&
+        existingHeadPosition.department.id !== department.id
+      ) {
+        throw new BadRequestException(
+          `Worker is already head of department "${existingHeadPosition.department.name}". A worker cannot be head of multiple departments.`,
         );
       }
 
-      // Update worker role
-      worker.role = WorkerRole.HEAD_OF_DEPARTMENT;
-      await this.workersRepo.save(worker);
+      // 🚨 If there is a previous head and it is changing
+      if (
+        department.headOfDepartment &&
+        department.headOfDepartment.worker.id !== newHead.id
+      ) {
+        const previousHead = department.headOfDepartment.worker;
 
-      // Check if HeadOfDepartment already exists
+        // 1️⃣ Downgrade previous head role
+        previousHead.role = WorkerRole.DOCTOR;
+        await this.workersRepo.save(previousHead);
+
+        // 2️⃣ Deactivate previous WorkerDepartment
+        await this.workersdepsRepo.update(
+          {
+            worker: { id: previousHead.id },
+            department: { id: department.id },
+            active: true,
+          },
+          {
+            active: false,
+            leftAt: new Date(),
+          },
+        );
+      }
+
+      // 3️⃣ Promote new head
+      newHead.role = WorkerRole.HEAD_OF_DEPARTMENT;
+      await this.workersRepo.save(newHead);
+
+      // 4️⃣ Assign / update HeadOfDepartment entity
       if (!department.headOfDepartment) {
-        // Create new HeadOfDepartment if it doesn't exist
         const head = this.headsRepo.create({
-          worker,
+          worker: newHead,
           department,
           assignedAt: new Date(),
         });
         department.headOfDepartment = await this.headsRepo.save(head);
       } else {
-        // Update existing HeadOfDepartment
-        department.headOfDepartment.worker = worker;
+        department.headOfDepartment.worker = newHead;
         department.headOfDepartment = await this.headsRepo.save(
           department.headOfDepartment,
         );
       }
 
-      // ✅ Assign worker to department via WorkerDepartment
-      const workerDept = new WorkerDepartment();
-      workerDept.worker = worker;
-      workerDept.department = department;
-      workerDept.active = true;
+      // 5️⃣ Ensure WorkerDepartment is active for new head
+      let workerDept = await this.workersdepsRepo.findOne({
+        where: {
+          worker: { id: newHead.id },
+          department: { id: department.id },
+        },
+      });
+
+      if (!workerDept) {
+        workerDept = this.workersdepsRepo.create({
+          worker: newHead,
+          department,
+          active: true,
+        });
+      } else {
+        workerDept.active = true;
+        workerDept.leftAt = undefined;
+      }
+
       await this.workersdepsRepo.save(workerDept);
 
-      // ✅ Update worker's current department
-      worker.department = department;
-      await this.workersRepo.save(worker);
+      // 6️⃣ Update worker current department
+      newHead.department = department;
+      await this.workersRepo.save(newHead);
     }
 
     return this.departmentsRepo.save(department);
@@ -190,23 +306,32 @@ async searchByName(q: string) {
     console.log('🔧 Inicializando departamentos por defecto...');
 >>>>>>> f924e05 (test de worker pinchando en base de dato de test)
 
-  const defaultDepartments = ["Droguería", "Almacén"];
+    const defaultDepartments = [
+      'Droguería',
+      'Almacén',
+      'Emergencias',
+      'Pediatría',
+      'Medicina Interna',
+      'Cirugía',
+      'Ginecología',
+      'Ortopedia',
+      'Cardiología',
+      'Neurología',
+    ];
 
-  for (const name of defaultDepartments) {
-    const exists = await this.departmentsRepo.findOne({ where: { name } });
+    for (const name of defaultDepartments) {
+      const exists = await this.departmentsRepo.findOne({ where: { name } });
 
-    if (!exists) {
-      console.log(`➡️ Creando departamento inicial: ${name}`);
+      if (!exists) {
+        console.log(`➡️ Creando departamento inicial: ${name}`);
 
-      const department = this.departmentsRepo.create({ name });
-      await this.departmentsRepo.save(department);
-    } else {
-      console.log(`✔️ Departamento '${name}' ya existe, no se crea de nuevo.`);
+        // Create department WITHOUT a head (no headWorkerId provided)
+        await this.create(name);
+      } else {
+        console.log(`✔️ Departamento '${name}' ya existe, no se crea de nuevo.`);
+      }
     }
+
+    console.log('✅ Departamentos iniciales listos.');
   }
-
-  console.log("✅ Departamentos iniciales listos.");
-}
-
-
 }

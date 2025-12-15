@@ -1,9 +1,13 @@
-import { Controller, Get, Post, Param, Body, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Param, Body, Delete, UseGuards, Req } from '@nestjs/common';
 import { RemissionsService } from './remissions.service';
+import { JwtAuthGuard } from 'src/auth/jwt.guard';
+import { RolesGuard } from 'src/auth/roles.guard';
+import { UserRole } from 'src/users/user.entity';
+import { Roles } from 'src/auth/roles.decorator';
 
 @Controller('remissions')
 export class RemissionsController {
-  constructor(private readonly remissionsService: RemissionsService) {}
+  constructor(private readonly remissionsService: RemissionsService) { }
 
   @Post('internal')
   createInternal(
@@ -34,6 +38,12 @@ export class RemissionsController {
   @Get('by-department/:departmentId')
   findByDepartment(@Param('departmentId') departmentId: string) {
     return this.remissionsService.findByDepartment(departmentId);
+  }
+  @Get('my-remissions/own')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.DOCTOR, UserRole.HEAD_OF_DEPARTMENT)
+  async getMyConsultations(@Req() req) {
+    return this.remissionsService.findByWorkerDepartment(req.user.entityId);
   }
 
   @Get('from-department/:departmentId')

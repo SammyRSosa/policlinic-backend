@@ -45,7 +45,6 @@ export class ConsultationsController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.DOCTOR, UserRole.NURSE)
   findByNurse(@Req() req) {
-    console.log(req.user);
     return this.service.findByNurse(req.user.entityId);
   }
 
