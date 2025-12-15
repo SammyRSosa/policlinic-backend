@@ -1,17 +1,22 @@
 Árbol de directorios
 ====================
 
-Directorio: C:\Users\marti\OneDrive\Documents\SCUL\IS PROYECTO\new version\policlinic-backend
+Directorio: C:\MARGARITA RUIZ\policlinic-backend
 
+📄 .env
+📄 .env.test
 📁 .git/
+   └── 📄 COMMIT_EDITMSG
    └── 📄 config
    └── 📄 description
+   └── 📄 FETCH_HEAD
    └── 📄 HEAD
    └── 📁 hooks/
    └── 📄 index
    └── 📁 info/
    └── 📁 logs/
    └── 📁 objects/
+   └── 📄 ORIG_HEAD
    └── 📄 packed-refs
    └── 📁 refs/
 📄 .gitignore
@@ -30,9 +35,9 @@ Directorio: C:\Users\marti\OneDrive\Documents\SCUL\IS PROYECTO\new version\polic
    └── 📄 app.service.js.map
    └── 📁 auth/
    └── 📁 clinic-histories/
+   └── 📁 config/
    └── 📁 consultations/
    └── 📁 consultations-prescriptions/
-   └── 📁 department-stocks/
    └── 📁 departments/
    └── 📁 heads-of-departments/
    └── 📄 main.d.ts
@@ -46,15 +51,16 @@ Directorio: C:\Users\marti\OneDrive\Documents\SCUL\IS PROYECTO\new version\polic
    └── 📁 medications/
    └── 📁 patients/
    └── 📁 remissions/
+   └── 📁 report/
+   └── 📁 seed/
    └── 📁 stock-items/
-   └── 📁 stock-requests/
-   └── 📁 stocks/
    └── 📄 tsconfig.build.tsbuildinfo
    └── 📁 users/
    └── 📁 workers/
    └── 📁 workers-department/
 📄 docker-compose.yml
 📄 eslint.config.mjs
+📄 init.sql
 📄 INSTRUCCIONES_INSTALACION.md
 📄 nest-cli.json
 📁 node_modules/
@@ -66,6 +72,8 @@ Directorio: C:\Users\marti\OneDrive\Documents\SCUL\IS PROYECTO\new version\polic
    └── 📁 @borewit/
    └── 📁 @colors/
    └── 📁 @cspotcode/
+   └── 📁 @emnapi/
+   └── 📁 @epic-web/
    └── 📁 @eslint/
    └── 📁 @eslint-community/
    └── 📁 @humanfs/
@@ -77,6 +85,7 @@ Directorio: C:\Users\marti\OneDrive\Documents\SCUL\IS PROYECTO\new version\polic
    └── 📁 @jridgewell/
    └── 📁 @lukeed/
    └── 📁 @mongodb-js/
+   └── 📁 @napi-rs/
    └── 📁 @nestjs/
    └── 📁 @noble/
    └── 📁 @nodelib/
@@ -89,6 +98,7 @@ Directorio: C:\Users\marti\OneDrive\Documents\SCUL\IS PROYECTO\new version\polic
    └── 📁 @sqltools/
    └── 📁 @tokenizer/
    └── 📁 @tsconfig/
+   └── 📁 @tybys/
    └── 📁 @types/
    └── 📁 @typescript-eslint/
    └── 📁 @ungap/
@@ -181,6 +191,7 @@ Directorio: C:\Users\marti\OneDrive\Documents\SCUL\IS PROYECTO\new version\polic
    └── 📁 cors/
    └── 📁 cosmiconfig/
    └── 📁 create-require/
+   └── 📁 cross-env/
    └── 📁 cross-spawn/
    └── 📁 dayjs/
    └── 📁 debug/
@@ -599,9 +610,9 @@ Directorio: C:\Users\marti\OneDrive\Documents\SCUL\IS PROYECTO\new version\polic
    └── 📄 app.service.ts
    └── 📁 auth/
    └── 📁 clinic-histories/
+   └── 📁 config/
    └── 📁 consultations/
    └── 📁 consultations-prescriptions/
-   └── 📁 department-stocks/
    └── 📁 departments/
    └── 📁 heads-of-departments/
    └── 📄 main.ts
@@ -613,14 +624,15 @@ Directorio: C:\Users\marti\OneDrive\Documents\SCUL\IS PROYECTO\new version\polic
    └── 📁 medications/
    └── 📁 patients/
    └── 📁 remissions/
+   └── 📁 report/
+   └── 📁 seed/
    └── 📁 stock-items/
-   └── 📁 stock-requests/
-   └── 📁 stocks/
    └── 📁 users/
    └── 📁 workers/
    └── 📁 workers-department/
 📁 test/
    └── 📄 app.e2e-spec.ts
    └── 📄 jest-e2e.json
+   └── 📄 set-env.ts
 📄 tsconfig.build.json
 📄 tsconfig.json

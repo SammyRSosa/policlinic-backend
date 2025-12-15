@@ -241,6 +241,7 @@ export class DepartmentsService implements OnApplicationBootstrap {
   }
 
   async onApplicationBootstrap() {
+      if (process.env.NODE_ENV === 'test') return; // ❌ saltar seeds en test
     console.log('🔧 Inicializando departamentos por defecto...');
 
     const defaultDepartments = [
