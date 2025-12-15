@@ -6,7 +6,7 @@ import { HeadOfDepartment } from 'src/heads-of-departments/head-of-department.en
 import { Worker, WorkerRole } from 'src/workers/worker.entity';
 import { WorkerDepartment } from 'src/workers-department/worker-department.entity';
 import { User } from 'src/users/user.entity';
-
+import { BadRequestException} from '@nestjs/common';
 @Injectable()
 export class DepartmentsService implements OnApplicationBootstrap {
   constructor(
@@ -141,6 +141,23 @@ export class DepartmentsService implements OnApplicationBootstrap {
 
       if (!newHead) {
         throw new NotFoundException('Worker not found');
+      }
+
+      // ✅ Check if worker is already head of a different department
+      const existingHeadPosition = await this.headsRepo.findOne({
+        where: {
+          worker: { id: newHead.id },
+        },
+        relations: ['department'],
+      });
+
+      if (
+        existingHeadPosition &&
+        existingHeadPosition.department.id !== department.id
+      ) {
+        throw new BadRequestException(
+          `Worker is already head of department "${existingHeadPosition.department.name}". A worker cannot be head of multiple departments.`,
+        );
       }
 
       // 🚨 If there is a previous head and it is changing
