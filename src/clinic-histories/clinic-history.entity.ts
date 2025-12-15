@@ -16,12 +16,11 @@ export class ClinicHistory {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @OneToOne(() => Patient, (patient) => patient.clinicHistory, { nullable: false, onDelete: 'CASCADE' })
+  @OneToOne(() => Patient, (patient) => patient.clinicHistory, {eager: true , nullable: false, onDelete: 'CASCADE' })
   @JoinColumn()
   patient: Patient;
 
   @OneToMany(() => Consultation, (consultation) => consultation.clinicHistory, { cascade: true })
-  @Exclude()
   consultations: Consultation[];
 
   @Column({ type: 'text', nullable: true })

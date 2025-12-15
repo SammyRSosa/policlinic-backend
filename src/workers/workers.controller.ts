@@ -15,7 +15,6 @@ export class WorkersController {
   @UseGuards(JwtAuthGuard, RolesGuard) // <— important!
   @Roles(UserRole.ADMIN, UserRole.HEAD_OF_DEPARTMENT)
   create(@Body() dto: CreateWorkerDto, @Req() req) {
-    console.log('Logged user:', req.user); // will show id & role from JWT
     return this.service.create(dto, req.user);
   }
 

@@ -55,7 +55,6 @@ export class ConsultationsService {
     remissionId?: string,
     remissionType?: 'internal' | 'external',
   ) {
-    console.log(remissionId, remissionType);
 
     const patient = await this.patientsRepo.findOne({ where: { id: patientId } });
     if (!patient) throw new NotFoundException('Patient not found');
@@ -279,8 +278,6 @@ export class ConsultationsService {
   // -------------------------------------------------------
 
   private async attachConsultationToPatientHistory(patientId: string, consultation: Consultation) {
-
-    console.log(patientId,consultation)
     const patient = await this.patientsRepo.findOne({
       where: { id: patientId },
       relations: ['clinicHistory', 'clinicHistory.consultations'], // <-- LOAD THE CONSULTATIONS
@@ -304,9 +301,6 @@ export class ConsultationsService {
 
     consultation.clinicHistory = clinicHistory;
     await this.consultationsRepo.save(consultation);
-
-    console.log(clinicHistory)
-    console.log(consultation)
 
     return instanceToPlain(clinicHistory);
   }
