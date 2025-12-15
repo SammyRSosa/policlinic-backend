@@ -76,5 +76,15 @@ export class ReportsController {
       dto.month,
     );
   }
+
+  @Post('medication-consumption/bydep')
+  getConsumptionbydep(@Body() body: { departmentId?: string; month?: string }) {
+    const { departmentId, month } = body;
+    return this.reportsService.getMedicationConsumptionByDepartment(
+      departmentId,
+      month,
+    );
+  }
+
 }
 

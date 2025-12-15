@@ -132,11 +132,10 @@ export class ReportsService {
         row.currentStock < row.minThreshold
           ? 'CRITICAL'
           : row.currentStock > row.maxThreshold
-          ? 'OVERSTOCK'
-          : 'OK',
+            ? 'OVERSTOCK'
+            : 'OK',
     }));
   }
-
   // ===== MEDICATIONS/STOCK REPORT =====
   async getMedicationsReport(departmentId?: string) {
     let stockItems: any[] = [];
@@ -307,4 +306,60 @@ export class ReportsService {
       generatedAt: new Date(),
     };
   }
+
+
+  async getMedicationConsumptionByDepartment(
+    departmentId?: string,
+    month?: string,
+  ) {
+    const params: any[] = [];
+    let whereClause = '';
+
+    if (month) {
+      whereClause += ` AND DATE_TRUNC('month', c."createdAt") = DATE_TRUNC('month', $${params.length + 1}::date)`;
+      params.push(month);
+    }
+
+    if (departmentId) {
+      whereClause += ` AND d.id = $${params.length + 1}`;
+      params.push(departmentId);
+    }
+
+    const raw = await this.consultationsRepo.query(
+      `
+    SELECT
+      d.id AS "departmentId",
+      d.name AS "departmentName",
+      m.id AS "medicationId",
+      m.name AS "medicationName",
+      SUM(cp.quantity) AS "totalConsumed",
+      si.quantity AS "currentStock",
+      si."minThreshold",
+      si."maxThreshold"
+    FROM consultation_prescriptions cp
+    JOIN consultations c ON c.id = cp."consultationId"
+    JOIN departments d ON d.id = c."departmentId"
+    JOIN medications m ON m.id = cp."medicationId"
+    LEFT JOIN stock_items si
+      ON si."departmentId" = d.id
+     AND si."medicationId" = m.id
+    WHERE 1=1
+      ${whereClause}
+    GROUP BY d.id, d.name, m.id, m.name, si.quantity, si."minThreshold", si."maxThreshold"
+    ORDER BY d.name, m.name
+    `,
+      params, // <- pass as array of separate values
+    );
+
+    return raw.map((row) => ({
+      ...row,
+      status:
+        row.currentStock < row.minThreshold
+          ? 'CRITICAL'
+          : row.currentStock > row.maxThreshold
+            ? 'OVERSTOCK'
+            : 'OK',
+    }));
+  }
+
 }
