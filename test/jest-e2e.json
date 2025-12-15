@@ -5,5 +5,15 @@
   "testRegex": ".e2e-spec.ts$",
   "transform": {
     "^.+\\.(t|j)s$": "ts-jest"
+<<<<<<< HEAD
+=======
+  },
+  "setupFilesAfterEnv": ["<rootDir>/test/setup-db.ts"],
+  "detectOpenHandles": true,
+  "forceExit": true,
+  "coverageDirectory": "./coverage-e2e",
+  "moduleNameMapper": {
+    "^src/(.*)$": "<rootDir>/src/$1"
+>>>>>>> f924e05 (test de worker pinchando en base de dato de test)
   }
 }

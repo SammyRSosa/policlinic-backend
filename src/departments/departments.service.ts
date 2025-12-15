@@ -183,7 +183,12 @@ async searchByName(q: string) {
   }
 
   async onApplicationBootstrap() {
+<<<<<<< HEAD
   console.log("🔧 Inicializando departamentos por defecto...");
+=======
+      if (process.env.NODE_ENV === 'test') return; // ❌ saltar seeds en test
+    console.log('🔧 Inicializando departamentos por defecto...');
+>>>>>>> f924e05 (test de worker pinchando en base de dato de test)
 
   const defaultDepartments = ["Droguería", "Almacén"];
 
