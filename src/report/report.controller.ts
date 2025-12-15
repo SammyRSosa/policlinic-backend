@@ -86,5 +86,19 @@ export class ReportsController {
     );
   }
 
+
+  @Get('doctor-success-rate')
+  async getDoctorSuccessRate(
+    @Query('doctorId') doctorId: string,
+    @Query('startDate') startDate?: string,
+    @Query('endDate') endDate?: string,
+  ) {
+    const start = startDate ? new Date(startDate) : undefined;
+    const end = endDate ? new Date(endDate) : undefined;
+
+    return this.reportsService.getDoctorSuccessRate(doctorId, start, end);
+  }
+
+
 }
 

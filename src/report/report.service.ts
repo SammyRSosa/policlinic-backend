@@ -362,4 +362,105 @@ export class ReportsService {
     }));
   }
 
+  async getDoctorSuccessRate(
+    doctorId: string,
+    startDate?: Date,
+    endDate?: Date,
+  ) {
+    // Build query for doctor's consultations
+    const query = this.consultationsRepo.createQueryBuilder('c')
+      .leftJoinAndSelect('c.mainDoctor', 'mainDoctor')
+      .leftJoinAndSelect('c.department', 'department')
+      .leftJoinAndSelect('c.patient', 'emergencyPatient')
+      .leftJoinAndSelect('c.internalRemission', 'ir')
+      .leftJoinAndSelect('ir.patient', 'irPatient')
+      .leftJoinAndSelect('c.externalRemission', 'er')
+      .leftJoinAndSelect('er.patient', 'erPatient')
+      .where('c.mainDoctorId = :doctorId', { doctorId }) // ✅ use foreign key column
+      .where('c.status = :status', { status: 'closed' });
+
+    if (startDate && endDate) {
+      query.andWhere('c.createdAt BETWEEN :startDate AND :endDate', {
+        startDate,
+        endDate,
+      });
+    }
+
+    const consultations = await query.getMany();
+
+    // Calculate success rate for each consultation
+    const results = await Promise.all(
+      consultations.map(async (consultation) => {
+        // Get the patient from the consultation
+        const patient = (consultation as any).patient ??
+          (consultation as any).internalRemission?.patient ??
+          (consultation as any).externalRemission?.patient;
+
+        if (!patient) return null;
+
+        // Calculate 3 months from consultation date
+        const threeMonthsLater = new Date(consultation.createdAt);
+        threeMonthsLater.setMonth(threeMonthsLater.getMonth() + 3);
+
+        // Check if patient returned to the same department within 3 months
+        const returnVisits = await this.consultationsRepo.createQueryBuilder('c2')
+          .leftJoin('c2.patient', 'p2')
+          .leftJoin('c2.internalRemission', 'ir2')
+          .leftJoin('ir2.patient', 'irp2')
+          .leftJoin('c2.externalRemission', 'er2')
+          .leftJoin('er2.patient', 'erp2')
+          .where('c2.departmentId = :departmentId', {
+            departmentId: consultation.department.id
+          })
+          .andWhere('c2.id != :consultationId', {
+            consultationId: consultation.id
+          })
+          .andWhere('c2.createdAt > :consultationDate', {
+            consultationDate: consultation.createdAt
+          })
+          .andWhere('c2.createdAt <= :threeMonthsLater', {
+            threeMonthsLater
+          })
+          .andWhere(
+            '(p2.id = :patientId OR irp2.id = :patientId OR erp2.id = :patientId)',
+            { patientId: patient.id }
+          )
+          .getCount();
+
+        return {
+          consultationId: consultation.id,
+          consultationDate: consultation.createdAt,
+          patientId: patient.id,
+          patientName: `${patient.firstName} ${patient.lastName}`,
+          departmentId: consultation.department.id,
+          departmentName: consultation.department.name,
+          returnedWithin3Months: returnVisits > 0,
+          returnVisitsCount: returnVisits,
+          successful: returnVisits === 0, // Success = patient didn't return
+        };
+      })
+    );
+
+    const validResults = results.filter(r => r !== null);
+    const totalConsultations = validResults.length;
+    const successfulConsultations = validResults.filter(r => r.successful).length;
+    const successRate = totalConsultations > 0
+      ? (successfulConsultations / totalConsultations) * 100
+      : 0;
+
+    return {
+      type: 'doctor_success_rate',
+      doctorId,
+      totalConsultations,
+      successfulConsultations,
+      failedConsultations: totalConsultations - successfulConsultations,
+      successRate: parseFloat(successRate.toFixed(2)),
+      period: {
+        startDate,
+        endDate,
+      },
+      details: validResults,
+      generatedAt: new Date(),
+    };
+  }
 }
